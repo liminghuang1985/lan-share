@@ -10,6 +10,10 @@
   },
   "author": "LAN Share Team",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/liminghuang1985/lan-share.git"
+  },
   "devDependencies": {
     "electron": "^33.0.0",
     "electron-builder": "^25.0.0"
