@@ -11,7 +11,7 @@ const router = express.Router();
 router.get('/matrix', authenticate, requireAdmin, (req, res) => {
   try {
     const folders = db.prepare('SELECT * FROM folders ORDER BY name').all();
-    const users = db.prepare('SELECT id, username, display_name, department FROM users WHERE status = ? ORDER BY username', 'active').all();
+    const users = db.prepare('SELECT id, username, display_name, department FROM users WHERE status = ? ORDER BY username').all('active');
     
     const permissions = db.prepare(`
       SELECT user_id, folder_id, can_read, can_write, granted_at, granted_by
