@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAN Share · 文件浏览</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #F5F6F8;
+      --bg-secondary: #FFFFFF;
+      --bg-tertiary: #EEF0F3;
+      --border: #E2E5EA;
+      --border-subtle: #F0F1F3;
+      --text-primary: #1A1D21;
+      --text-secondary: #5C6068;
+      --text-tertiary: #9CA3AF;
+      --accent: #6142D9;
+      --accent-hover: #5236C6;
+      --accent-subtle: rgba(97,66,217,0.08);
+      --success: #10B981;
+      --warning: #F59E0B;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+    /* Header */
+    .header { display: flex; align-items: center; justify-content: space-between; padding: 14px 24px; background: var(--bg-secondary); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 100; }
+    .header-left { display: flex; align-items: center; gap: 16px; }
+    .logo { display: flex; align-items: center; gap: 8px; }
+    .logo-icon { width: 28px; height: 28px; background: linear-gradient(135deg, var(--accent), #8B5CF6); border-radius: 7px; display: flex; align-items: center; justify-content: center; }
+    .logo-icon svg { width: 16px; height: 16px; fill: white; }
+    .logo-text { font-size: 15px; font-weight: 600; }
+    .header-right { display: flex; align-items: center; gap: 10px; }
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; font-family: inherit; cursor: pointer; transition: background 0.15s; text-decoration: none; border: none; }
+    .btn svg { width: 15px; height: 15px; fill: currentColor; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-secondary { background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); }
+    .btn-secondary:hover { background: var(--bg-tertiary); }
+    /* Layout */
+    .main-layout { display: flex; min-height: calc(100vh - 57px); }
+    /* Sidebar */
+    .sidebar { width: 220px; background: var(--bg-secondary); border-right: 1px solid var(--border); padding: 20px 12px; flex-shrink: 0; }
+    .sidebar-section { margin-bottom: 24px; }
+    .sidebar-title { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 10px; padding: 0 8px; }
+    .sidebar-link { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 6px; font-size: 13px; color: var(--text-secondary); cursor: pointer; transition: background 0.15s, color 0.15s; text-decoration: none; }
+    .sidebar-link:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+    .sidebar-link.active { background: var(--accent-subtle); color: var(--accent); }
+    .sidebar-link svg { width: 16px; height: 16px; fill: currentColor; flex-shrink: 0; }
+    .sidebar-link .count { margin-left: auto; font-size: 11px; color: var(--text-tertiary); }
+    /* Content */
+    .content { flex: 1; padding: 20px 24px; }
+    .breadcrumb { display: flex; align-items: center; gap: 6px; margin-bottom: 16px; font-size: 13px; color: var(--text-secondary); }
+    .breadcrumb-sep { color: var(--text-tertiary); }
+    .breadcrumb-current { color: var(--text-primary); font-weight: 500; }
+    .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+    .search-box { position: relative; max-width: 300px; flex: 1; }
+    .search-box svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; fill: var(--text-tertiary); }
+    .search-box input { width: 100%; padding: 8px 12px 8px 36px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: inherit; color: var(--text-primary); }
+    .search-box input::placeholder { color: var(--text-tertiary); }
+    .search-box input:focus { outline: none; border-color: var(--accent); }
+    .view-toggle { display: flex; gap: 4px; }
+    .view-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; cursor: pointer; transition: background 0.15s; }
+    .view-btn svg { width: 16px; height: 16px; fill: var(--text-tertiary); }
+    .view-btn:hover { background: var(--bg-tertiary); }
+    .view-btn.active { background: var(--accent-subtle); border-color: var(--accent); }
+    .view-btn.active svg { fill: var(--accent); }
+    /* File Grid */
+    .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 16px; }
+    .file-item { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 20px 16px; text-align: center; cursor: pointer; transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s; }
+    .file-item:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(97,66,217,0.08); transform: translateY(-1px); }
+    .file-icon { width: 52px; height: 52px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; }
+    .file-icon svg { width: 26px; height: 26px; fill: white; }
+    .file-icon.folder { background: var(--accent); }
+    .file-icon.folder svg { fill: white; }
+    .file-icon.pdf { background: #EF4444; }
+    .file-icon.doc { background: #3B82F6; }
+    .file-icon.xls { background: #10B981; }
+    .file-icon.img { background: #F59E0B; }
+    .file-icon.zip { background: #6366F1; }
+    .file-icon svg { fill: white; }
+    .file-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; word-break: break-all; }
+    .file-size { font-size: 11px; color: var(--text-tertiary); }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></div>
+        <span class="logo-text">LAN Share</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <button class="btn btn-secondary">
+        <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+        张明
+      </button>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">快速访问</div>
+        <div class="sidebar-link active">
+          <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+          项目文档
+          <span class="count">48</span>
+        </div>
+        <div class="sidebar-link">
+          <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+          财务报表
+          <span class="count">156</span>
+        </div>
+        <div class="sidebar-link">
+          <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+          视频素材
+          <span class="count">32</span>
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">最近访问</div>
+        <div class="sidebar-link">
+          <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+          项目文档
+        </div>
+        <div class="sidebar-link">
+          <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+          视频素材
+        </div>
+      </div>
+      <div class="sidebar-section">
+        <div class="sidebar-title">我的记录</div>
+        <a href="LIGHT-12-client-history.html" class="sidebar-link">
+          <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+          下载历史
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="content">
+      <div class="breadcrumb">
+        <span>共享文件</span>
+        <span class="breadcrumb-sep">›</span>
+        <span class="breadcrumb-current">项目文档</span>
+      </div>
+
+      <div class="toolbar">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" placeholder="搜索文件...">
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <div class="view-toggle">
+            <button class="view-btn active">
+              <svg viewBox="0 0 24 24"><path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/></svg>
+            </button>
+            <button class="view-btn">
+              <svg viewBox="0 0 24 24"><path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+            </button>
+          </div>
+          <button class="btn btn-primary">
+            <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+            上传文件
+          </button>
+        </div>
+      </div>
+
+      <div class="file-grid">
+        <div class="file-item">
+          <div class="file-icon folder">
+            <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+          </div>
+          <div class="file-name">设计稿</div>
+          <div class="file-size">文件夹</div>
+        </div>
+        <div class="file-item">
+          <div class="file-icon pdf">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <div class="file-name">项目计划书.docx</div>
+          <div class="file-size">2.3 MB</div>
+        </div>
+        <div class="file-item">
+          <div class="file-icon img">
+            <svg viewBox="0 0 24 24"><path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z"/></svg>
+          </div>
+          <div class="file-name">产品原型.png</div>
+          <div class="file-size">8.6 MB</div>
+        </div>
+        <div class="file-item">
+          <div class="file-icon xls">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+          </div>
+          <div class="file-name">进度跟踪.xlsx</div>
+          <div class="file-size">1.5 MB</div>
+        </div>
+        <div class="file-item">
+          <div class="file-icon zip">
+            <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2z"/></svg>
+          </div>
+          <div class="file-name">资料打包.zip</div>
+          <div class="file-size">124.5 MB</div>
+        </div>
+        <div class="file-item">
+          <div class="file-icon doc">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+          </div>
+          <div class="file-name">会议记录.docx</div>
+          <div class="file-size">856 KB</div>
+        </div>
+        <div class="file-item">
+          <div class="file-icon pdf">
+            <svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+          </div>
+          <div class="file-name">需求文档.pdf</div>
+          <div class="file-size">3.2 MB</div>
+        </div>
+        <div class="file-item">
+          <div class="file-icon xls">
+            <svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zM6 20V4h7v5h5v11H6z"/></svg>
+          </div>
+          <div class="file-name">预算表.xlsx</div>
+          <div class="file-size">2.1 MB</div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

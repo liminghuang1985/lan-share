@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAN Share · 文件浏览器</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/theme.css">
+  <link rel="stylesheet" href="css/browse.css">
+</head>
+<body>
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        </div>
+        <span class="logo-text">LAN Share</span>
+      </div>
+    </div>
+    <div class="header-right">
+      <!-- 主题切换 -->
+      <button class="btn-icon" id="theme-toggle-btn" onclick="toggleTheme()" title="切换主题">
+        <svg class="theme-icon" viewBox="0 0 24 24"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>
+      </button>
+      <!-- 用户菜单 -->
+      <div class="user-menu" id="userMenu">
+        <div class="user-avatar" id="userAvatar">?</div>
+        <span class="user-name" id="userName">加载中...</span>
+        <svg class="dropdown-arrow" viewBox="0 0 24 24"><path d="M7 10l5 5 5-5z" fill="currentColor"/></svg>
+        <div class="user-dropdown" id="userDropdown">
+          <div class="dropdown-item" id="userRole" style="color: var(--text-tertiary); font-size: 12px;"></div>
+          <div class="dropdown-divider"></div>
+          <a href="12-client-history.html" class="dropdown-item">
+            <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+            我的记录
+          </a>
+          <button class="dropdown-item danger" onclick="doLogout()">
+            <svg viewBox="0 0 24 24"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+            退出登录
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="main-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-section">
+        <div class="sidebar-title">我的文件夹</div>
+        <div id="folderList">
+          <div class="sidebar-loading">
+            <span class="spinner" style="width:14px;height:14px;"></span>
+            <span>加载中...</span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <main class="content">
+      <!-- 工具栏 -->
+      <div class="toolbar">
+        <div class="breadcrumb" id="breadcrumb">
+          <span class="text-secondary">共享文件</span>
+        </div>
+        <div class="toolbar-actions">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+            <input type="text" id="searchInput" placeholder="搜索文件名..." oninput="onSearch(this.value)">
+          </div>
+          <!-- 上传按钮 -->
+          <button class="btn btn-primary" id="uploadBtn" onclick="triggerUpload()" style="display:none">
+            <svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4v6zm-4 2h14v2H5v-2z" fill="white"/></svg>
+            上传文件
+          </button>
+          <input type="file" id="fileInput" style="display:none" onchange="handleFileSelect(event)">
+        </div>
+      </div>
+
+      <!-- 上传进度条 -->
+      <div class="upload-progress" id="uploadProgress" style="display:none">
+        <div class="progress-info">
+          <span id="progressFileName">上传中...</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
+      </div>
+
+      <!-- 文件列表 -->
+      <div id="fileListContainer">
+        <div class="loading-state">
+          <span class="spinner"></span>
+          <span>加载中...</span>
+        </div>
+      </div>
+
+      <!-- 面包屑/返回 -->
+      <div id="emptyHint" style="display:none" class="empty-state">
+        <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+        <p>选择一个文件夹开始浏览</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- 通用模态框（下载确认 / 操作反馈） -->
+  <div class="modal-overlay" id="confirmModal" style="display:none" onclick="closeModal(event)">
+    <div class="modal" onclick="event.stopPropagation()">
+      <div class="modal-header">
+        <span class="modal-title" id="modalTitle">提示</span>
+        <button class="btn-icon" onclick="closeModal()">
+          <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+    // ============ 全局状态 ============
+    let currentFolderId = null;
+    let currentFolderName = '';
+    let folders = [];
+    let allFiles = [];     // 当前目录所有文件
+    let filteredFiles = []; // 搜索过滤后
+    let currentFolderPath = []; // 面包屑路径栈
+    let user = null;
+
+    // ============ 主题切换 ============
+    function toggleTheme() { Theme.toggle(); }
+
+    // ============ 初始化 ============
+    document.addEventListener('DOMContentLoaded', async () => {
+      Theme.init();
+
+      const auth = await requireAuth();
+      if (!auth) return;
+
+      // 加载用户信息
+      user = getCurrentUser();
+      if (!user) {
+        try {
+          const data = await Api.me();
+          user = data.user;
+          setCurrentUser(user);
+        } catch {}
+      }
+
+      if (user) {
+        document.getElementById('userName').textContent = user.display_name || user.username;
+        document.getElementById('userAvatar').textContent = (user.display_name || user.username)[0].toUpperCase();
+        document.getElementById('userRole').textContent = user.role === 'admin' ? '管理员' : user.role === 'readonly' ? '只读用户' : '普通用户';
+      }
+
+      // 加载文件夹列表
+      await loadFolders();
+
+      // 用户下拉
+      document.getElementById('userMenu').addEventListener('click', (e) => {
+        e.stopPropagation();
+        document.getElementById('userDropdown').classList.toggle('show');
+      });
+      document.addEventListener('click', () => {
+        document.getElementById('userDropdown').classList.remove('show');
+      });
+
+      document.getElementById('emptyHint').style.display = 'flex';
+    });
+
+    // ============ 加载文件夹列表 ============
+    async function loadFolders() {
+      const el = document.getElementById('folderList');
+      try {
+        const data = await Api.getFolders('read');
+        folders = data.folders || [];
+        renderFolderList();
+      } catch (err) {
+        el.innerHTML = `<div class="sidebar-error">加载失败</div>`;
+        showToast('加载文件夹失败', 'error');
+      }
+    }
+
+    function renderFolderList() {
+      const el = document.getElementById('folderList');
+      if (!folders.length) {
+        el.innerHTML = `<div class="sidebar-empty">暂无可访问文件夹</div>`;
+        return;
+      }
+      el.innerHTML = folders.map(f => `
+        <div class="sidebar-link ${f.id === currentFolderId ? 'active' : ''}" onclick="openFolder(${f.id}, '${escapeAttr(f.name)}')">
+          <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+          <span class="truncate">${escapeHtml(f.name)}</span>
+          ${f.can_write ? '<span class="write-badge" title="可写入">✏️</span>' : ''}
+        </div>
+      `).join('');
+    }
+
+    // ============ 打开文件夹 ============
+    async function openFolder(folderId, folderName) {
+      currentFolderId = folderId;
+      currentFolderName = folderName;
+
+      // 找文件夹信息
+      const folderInfo = folders.find(f => f.id === folderId);
+      const canWrite = folderInfo?.can_write;
+
+      // 高亮侧边栏
+      renderFolderList();
+
+      // 更新面包屑
+      currentFolderPath = [{ id: folderId, name: folderName }];
+      renderBreadcrumb();
+
+      // 显示上传按钮
+      document.getElementById('uploadBtn').style.display = canWrite ? 'inline-flex' : 'none';
+      document.getElementById('uploadBtn').dataset.folderId = folderId;
+
+      // 加载文件列表
+      const container = document.getElementById('fileListContainer');
+      container.innerHTML = `<div class="loading-state"><span class="spinner"></span><span>加载中...</span></div>`;
+      document.getElementById('emptyHint').style.display = 'none';
+
+      try {
+        const data = await Api.browseFolder(folderId);
+        allFiles = data.files || [];
+        filteredFiles = [...allFiles];
+        renderFileList();
+      } catch (err) {
+        container.innerHTML = `<div class="empty-state"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg><p>加载失败：${err.message}</p></div>`;
+        showToast('加载文件列表失败', 'error');
+      }
+    }
+
+    // ============ 渲染面包屑 ============
+    function renderBreadcrumb() {
+      const el = document.getElementById('breadcrumb');
+      const crumbs = [{ name: '共享文件', id: null }];
+      if (currentFolderName) crumbs.push({ name: currentFolderName, id: currentFolderId });
+
+      el.innerHTML = crumbs.map((c, i) => {
+        if (i === crumbs.length - 1) {
+          return `<span class="breadcrumb-current">${escapeHtml(c.name)}</span>`;
+        }
+        return `<span class="text-secondary" style="cursor:pointer" onclick="goBack()">${escapeHtml(c.name)}</span>
+                <span class="breadcrumb-sep">›</span>`;
+      }).join('');
+    }
+
+    function goBack() {
+      currentFolderId = null;
+      currentFolderName = '';
+      allFiles = [];
+      filteredFiles = [];
+      currentFolderPath = [];
+      document.getElementById('breadcrumb').innerHTML = '<span class="text-secondary">共享文件</span>';
+      document.getElementById('uploadBtn').style.display = 'none';
+      document.getElementById('fileListContainer').innerHTML = '';
+      document.getElementById('emptyHint').style.display = 'flex';
+      renderFolderList();
+    }
+
+    // ============ 渲染文件列表 ============
+    function renderFileList() {
+      const container = document.getElementById('fileListContainer');
+
+      if (!filteredFiles.length) {
+        container.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24"><path d="M9 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2zm0 2h8v2h-2v2h2v2h-2v2h2v2h-2v2H9V4z"/></svg>
+            <p>此文件夹为空</p>
+          </div>`;
+        return;
+      }
+
+      // 先显示文件夹，再显示文件
+      const dirs = filteredFiles.filter(f => f.isDirectory);
+      const files = filteredFiles.filter(f => !f.isDirectory);
+      const sorted = [...dirs, ...files];
+
+      container.innerHTML = `
+        <div class="file-grid">
+          ${sorted.map(f => renderFileItem(f)).join('')}
+        </div>`;
+    }
+
+    function renderFileItem(file) {
+      const iconClass = getFileIconClass(file.name, file.isDirectory);
+      const iconSvg = getFileSvg(file.name, file.isDirectory);
+      const size = file.isDirectory ? '' : formatFileSize(file.size);
+
+      return `
+        <div class="file-item" onclick="${file.isDirectory ? `openFolder(${currentFolderId}, '${escapeAttr(currentFolderName)}')` : `onFileClick('${escapeAttr(file.name)}', ${file.size})`}"
+             ondblclick="${!file.isDirectory ? `onFileClick('${escapeAttr(file.name)}', ${file.size})` : ''}"
+             title="${escapeHtml(file.name)}">
+          <div class="file-icon ${iconClass}">${iconSvg}</div>
+          <div class="file-name">${escapeHtml(file.name)}</div>
+          <div class="file-size">${size}</div>
+        </div>`;
+    }
+
+    function getFileIconClass(name, isDir) {
+      if (isDir) return 'folder';
+      const ext = name.split('.').pop().toLowerCase();
+      const map = { pdf:'pdf', doc:'doc', docx:'doc', xls:'xls', xlsx:'xls', ppt:'ppt', pptx:'ppt',
+                    jpg:'img', jpeg:'img', png:'img', gif:'img', webp:'img',
+                    zip:'zip', rar:'zip', '7z':'zip', mp4:'video', mp3:'audio', txt:'txt' };
+      return map[ext] || 'file';
+    }
+
+    function getFileSvg(name, isDir) {
+      if (isDir) return `<svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>`;
+      return `<svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>`;
+    }
+
+    // ============ 文件点击（下载）============
+    function onFileClick(fileName, fileSize) {
+      const modalBody = document.getElementById('modalBody');
+      modalBody.innerHTML = `
+        <p style="margin-bottom:16px; font-size:14px;">确定要下载 <strong>${escapeHtml(fileName)}</strong> 吗？</p>
+        <p class="text-secondary" style="font-size:12px; margin-bottom:20px;">${formatFileSize(fileSize)}</p>
+        <div class="flex gap-2" style="justify-content:flex-end">
+          <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+          <button class="btn btn-primary" onclick="doDownload('${escapeAttr(fileName)}')">下载</button>
+        </div>`;
+      openModal();
+    }
+
+    function doDownload(fileName) {
+      closeModal();
+      Api.downloadFile(currentFolderId, fileName, fileName);
+      showToast(`开始下载：${fileName}`, 'success');
+    }
+
+    // ============ 上传 ============
+    function triggerUpload() {
+      document.getElementById('fileInput').click();
+    }
+
+    async function handleFileSelect(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      event.target.value = '';
+
+      const folderId = currentFolderId;
+      const progressEl = document.getElementById('uploadProgress');
+      const fillEl = document.getElementById('progressFill');
+      const nameEl = document.getElementById('progressFileName');
+      const pctEl = document.getElementById('progressPercent');
+
+      progressEl.style.display = 'block';
+      nameEl.textContent = file.name;
+      fillEl.style.width = '0%';
+      pctEl.textContent = '0%';
+
+      try {
+        await Api.uploadFile(folderId, file, (percent) => {
+          fillEl.style.width = percent + '%';
+          pctEl.textContent = percent + '%';
+        });
+
+        showToast(`上传成功：${file.name}`, 'success');
+        progressEl.style.display = 'none';
+
+        // 刷新文件列表
+        const data = await Api.browseFolder(folderId);
+        allFiles = data.files || [];
+        filteredFiles = [...allFiles];
+        renderFileList();
+
+      } catch (err) {
+        progressEl.style.display = 'none';
+        showToast(`上传失败：${err.message}`, 'error');
+      }
+    }
+
+    // ============ 搜索 ============
+    function onSearch(query) {
+      query = query.trim().toLowerCase();
+      if (!query) {
+        filteredFiles = [...allFiles];
+      } else {
+        filteredFiles = allFiles.filter(f => f.name.toLowerCase().includes(query));
+      }
+      renderFileList();
+    }
+
+    // ============ 模态框 ============
+    function openModal() {
+      document.getElementById('confirmModal').style.display = 'flex';
+    }
+    function closeModal(e) {
+      if (e && e.target !== e.currentTarget) return;
+      document.getElementById('confirmModal').style.display = 'none';
+    }
+
+    // ============ 登出 ============
+    async function doLogout() {
+      await Api.logout();
+      showToast('已退出登录', 'success');
+      setTimeout(() => redirectToLogin(), 300);
+    }
+
+    // ============ 工具 ============
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+    function escapeAttr(str) {
+      return str.replace(/'/g, "\\'").replace(/"/g, '\\"');
+    }
+  </script>
+</body>
+</html>

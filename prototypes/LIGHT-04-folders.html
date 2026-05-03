@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAN Share · 文件夹管理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #F5F6F8;
+      --bg-secondary: #FFFFFF;
+      --bg-tertiary: #EEF0F3;
+      --border: #E2E5EA;
+      --border-subtle: #F0F1F3;
+      --text-primary: #1A1D21;
+      --text-secondary: #5C6068;
+      --text-tertiary: #9CA3AF;
+      --accent: #6142D9;
+      --accent-hover: #5236C6;
+      --accent-subtle: rgba(97,66,217,0.08);
+      --success: #10B981;
+      --warning: #F59E0B;
+      --error: #EF4444;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar { width: 240px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 100; }
+    .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border-subtle); }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), #8B5CF6); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .logo-icon svg { width: 18px; height: 18px; fill: white; }
+    .logo-text { font-size: 16px; font-weight: 600; }
+    .sidebar-nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
+    .nav-section { margin-bottom: 24px; }
+    .nav-section-title { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; padding: 0 12px; margin-bottom: 8px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 6px; font-size: 14px; color: var(--text-secondary); cursor: pointer; transition: background 0.15s, color 0.15s; text-decoration: none; }
+    .nav-item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+    .nav-item.active { background: var(--accent-subtle); color: var(--accent); }
+    .nav-item svg { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+    .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border-subtle); }
+    .admin-info { display: flex; align-items: center; gap: 10px; }
+    .admin-avatar { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), #8B5CF6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: white; }
+    .admin-details { flex: 1; min-width: 0; }
+    .admin-name { font-size: 13px; font-weight: 500; }
+    .admin-role { font-size: 11px; color: var(--text-tertiary); }
+    .main { flex: 1; margin-left: 240px; padding: 24px 32px; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+    .page-header-left h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+    .page-header-left p { font-size: 14px; color: var(--text-secondary); }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; transition: background 0.15s; text-decoration: none; }
+    .btn svg { width: 16px; height: 16px; fill: currentColor; }
+    .btn-primary { background: var(--accent); border: 1px solid var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    .folder-card { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; padding: 20px; transition: border-color 0.15s, box-shadow 0.15s; cursor: pointer; }
+    .folder-card:hover { border-color: var(--accent); box-shadow: 0 2px 8px rgba(97,66,217,0.08); }
+    .folder-header { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 16px; }
+    .folder-icon { width: 44px; height: 44px; background: var(--accent-subtle); border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .folder-icon svg { width: 22px; height: 22px; fill: var(--accent); }
+    .folder-info { flex: 1; min-width: 0; }
+    .folder-name { font-size: 15px; font-weight: 500; margin-bottom: 4px; }
+    .folder-path { font-size: 12px; color: var(--text-tertiary); font-family: 'JetBrains Mono', monospace; }
+    .folder-stats { display: flex; gap: 20px; padding-top: 16px; border-top: 1px solid var(--border-subtle); }
+    .folder-stat { text-align: center; flex: 1; }
+    .folder-stat-value { font-size: 18px; font-weight: 600; margin-bottom: 2px; }
+    .folder-stat-label { font-size: 12px; color: var(--text-tertiary); }
+    .folder-actions { display: flex; gap: 8px; margin-top: 16px; }
+    .action-btn { flex: 1; display: flex; align-items: center; justify-content: center; gap: 6px; padding: 8px; background: var(--bg-tertiary); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; color: var(--text-secondary); cursor: pointer; transition: background 0.15s, border-color 0.15s, color 0.15s; font-family: inherit; }
+    .action-btn svg { width: 14px; height: 14px; fill: currentColor; }
+    .action-btn:hover { background: var(--bg-secondary); border-color: var(--accent); color: var(--text-primary); }
+    .action-btn.danger:hover { border-color: var(--error); color: var(--error); }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></div>
+          <span class="logo-text">LAN Share</span>
+        </div>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">概览</div>
+          <a href="LIGHT-02-dashboard.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>仪表盘</a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">管理</div>
+          <a href="LIGHT-03-users.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>用户管理</a>
+          <a href="#" class="nav-item active"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>文件夹管理</a>
+          <a href="#" class="nav-item"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>权限配置</a>
+        </div>
+        <div class="nav-section">
+          <div class="nav-section-title">日志</div>
+          <a href="#" class="nav-item"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>审计日志</a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="admin-info">
+          <div class="admin-avatar">管</div>
+          <div class="admin-details"><div class="admin-name">管理员</div><div class="admin-role">系统管理员</div></div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>文件夹管理</h1>
+          <p>管理共享文件夹目录和访问路径</p>
+        </div>
+        <button class="btn btn-primary">
+          <svg viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V6h5.17l2 2H20v10zm-8-4h2v2h-2zm0-6h2v4h-2z"/></svg>
+          新建文件夹
+        </button>
+      </div>
+
+      <div class="folder-grid">
+        <div class="folder-card">
+          <div class="folder-header">
+            <div class="folder-icon"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></div>
+            <div class="folder-info"><div class="folder-name">项目文档</div><div class="folder-path">D:\共享文件\项目文档</div></div>
+          </div>
+          <div class="folder-stats">
+            <div class="folder-stat"><div class="folder-stat-value">48</div><div class="folder-stat-label">文件数</div></div>
+            <div class="folder-stat"><div class="folder-stat-value">2.3 GB</div><div class="folder-stat-label">总大小</div></div>
+            <div class="folder-stat"><div class="folder-stat-value">12</div><div class="folder-stat-label">访问人数</div></div>
+          </div>
+          <div class="folder-actions">
+            <button class="action-btn"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>编辑</button>
+            <button class="action-btn danger"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>删除</button>
+          </div>
+        </div>
+
+        <div class="folder-card">
+          <div class="folder-header">
+            <div class="folder-icon"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></div>
+            <div class="folder-info"><div class="folder-name">财务报表</div><div class="folder-path">D:\共享文件\财务报表</div></div>
+          </div>
+          <div class="folder-stats">
+            <div class="folder-stat"><div class="folder-stat-value">156</div><div class="folder-stat-label">文件数</div></div>
+            <div class="folder-stat"><div class="folder-stat-value">856 MB</div><div class="folder-stat-label">总大小</div></div>
+            <div class="folder-stat"><div class="folder-stat-value">3</div><div class="folder-stat-label">访问人数</div></div>
+          </div>
+          <div class="folder-actions">
+            <button class="action-btn"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>编辑</button>
+            <button class="action-btn danger"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>删除</button>
+          </div>
+        </div>
+
+        <div class="folder-card">
+          <div class="folder-header">
+            <div class="folder-icon"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></div>
+            <div class="folder-info"><div class="folder-name">视频素材</div><div class="folder-path">D:\共享文件\视频素材</div></div>
+          </div>
+          <div class="folder-stats">
+            <div class="folder-stat"><div class="folder-stat-value">32</div><div class="folder-stat-label">文件数</div></div>
+            <div class="folder-stat"><div class="folder-stat-value">18.7 GB</div><div class="folder-stat-label">总大小</div></div>
+            <div class="folder-stat"><div class="folder-stat-value">8</div><div class="folder-stat-label">访问人数</div></div>
+          </div>
+          <div class="folder-actions">
+            <button class="action-btn"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>编辑</button>
+            <button class="action-btn danger"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>删除</button>
+          </div>
+        </div>
+
+        <div class="folder-card">
+          <div class="folder-header">
+            <div class="folder-icon"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg></div>
+            <div class="folder-info"><div class="folder-name">人力资源</div><div class="folder-path">D:\共享文件\人力资源</div></div>
+          </div>
+          <div class="folder-stats">
+            <div class="folder-stat"><div class="folder-stat-value">89</div><div class="folder-stat-label">文件数</div></div>
+            <div class="folder-stat"><div class="folder-stat-value">124 MB</div><div class="folder-stat-label">总大小</div></div>
+            <div class="folder-stat"><div class="folder-stat-value">5</div><div class="folder-stat-label">访问人数</div></div>
+          </div>
+          <div class="folder-actions">
+            <button class="action-btn"><svg viewBox="0 0 24 24"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>编辑</button>
+            <button class="action-btn danger"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>删除</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

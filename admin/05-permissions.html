@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAN Share · 权限配置</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/shared.css">
+</head>
+<body>
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        </div>
+        <span class="sidebar-logo-text">LAN Share</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section"><div class="nav-section-title">概览</div>
+        <a href="02-dashboard.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>仪表盘</a>
+      </div>
+      <div class="nav-section"><div class="nav-section-title">管理</div>
+        <a href="03-users.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>用户管理</a>
+        <a href="04-folders.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>文件夹管理</a>
+        <a href="05-permissions.html" class="nav-item active"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>权限配置</a>
+      </div>
+      <div class="nav-section"><div class="nav-section-title">日志</div>
+        <a href="06-logs.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg>审计日志</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-info">
+        <div class="admin-avatar" id="adminAvatar">管</div>
+        <div><div class="admin-name" id="adminName">管理员</div><div class="admin-role">系统管理员</div></div>
+      </div>
+      <button class="btn btn-ghost" onclick="doLogout()" style="font-size:12px;">
+        <svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        退出登录
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="admin-main">
+    <div class="page-header">
+      <h1>权限配置</h1>
+      <p>为用户分配共享文件夹的读写权限</p>
+    </div>
+
+    <div id="permContent">
+      <div class="loading-state">
+        <span class="spinner"></span>
+        <span>加载中...</span>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+<script>
+let matrix = {};
+let folders = [];
+let users = [];
+let changed = {};
+let saving = false;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  Theme.init();
+  const ok = await requireAdmin();
+  if (!ok) return;
+  highlightNav('05-permissions.html');
+  const user = getCurrentUser() || {};
+  document.getElementById('adminName').textContent = user.display_name || user.username || '管理员';
+  document.getElementById('adminAvatar').textContent = (user.display_name || user.username || '管')[0].toUpperCase();
+
+  await loadMatrix();
+});
+
+async function loadMatrix() {
+  const container = document.getElementById('permContent');
+  container.innerHTML = '<div class="loading-state"><span class="spinner"></span><span>加载中...</span></div>';
+  try {
+    const data = await Api.getPermissionMatrix();
+    folders = data.folders || [];
+    users = data.users || [];
+    matrix = data.matrix || {};
+    renderMatrix();
+  } catch (err) {
+    container.innerHTML = `<div class="empty-state"><p>加载失败：${err.message}</p></div>`;
+    showToast('加载权限矩阵失败', 'error');
+  }
+}
+
+function renderMatrix() {
+  const container = document.getElementById('permContent');
+
+  if (!folders.length || !users.length) {
+    container.innerHTML = '<div class="empty-state"><p>暂无用户或文件夹，请先创建</p></div>';
+    return;
+  }
+
+  container.innerHTML = `
+    <div class="card" style="overflow:hidden;">
+      <div class="card-header">
+        <span class="card-title">权限矩阵</span>
+        <div class="btn-group">
+          <span id="changeCount" style="font-size:12px;color:var(--text-tertiary);"></span>
+          <button class="btn btn-primary btn-sm" id="saveBtn" onclick="saveMatrix()" disabled>保存修改</button>
+        </div>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="data-table" style="min-width:${400 + folders.length * 120}px;">
+          <thead>
+            <tr>
+              <th style="position:sticky;left:0;background:var(--bg-tertiary);z-index:1;min-width:140px;">用户</th>
+              <th style="min-width:100px;">部门</th>
+              ${folders.map(f => `
+                <th style="text-align:center;min-width:110px;">
+                  <div style="font-size:12px;font-weight:600;">${escapeHtml(f.name)}</div>
+                </th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>
+            ${users.map(u => `
+              <tr>
+                <td style="position:sticky;left:0;background:var(--bg-secondary);z-index:1;">
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <div style="width:28px;height:28px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:white;flex-shrink:0;">${(u.display_name || u.username || '?')[0].toUpperCase()}</div>
+                    <div>
+                      <div style="font-size:13px;font-weight:500;">${escapeHtml(u.display_name || u.username)}</div>
+                    </div>
+                  </div>
+                </td>
+                <td style="font-size:12px;color:var(--text-secondary);">${escapeHtml(u.department || '-')}</td>
+                ${folders.map(f => {
+                  const key = `${u.id}-${f.id}`;
+                  const perm = matrix[u.id]?.folders?.[f.id] || {};
+                  const canRead = !!perm.canRead;
+                  const canWrite = !!perm.canWrite;
+                  const changedKey = changed[key];
+                  return `<td style="text-align:center;">
+                    <div class="perm-cell" style="gap:10px;">
+                      <label title="读取">
+                        <input type="checkbox"
+                          data-key="${key}"
+                          data-user="${u.id}"
+                          data-folder="${f.id}"
+                          data-type="canRead"
+                          ${canRead ? 'checked' : ''}
+                          ${changedKey?.canRead !== undefined ? (changedKey.canRead ? 'checked' : '') : ''}
+                          onchange="onPermChange(this)">
+                      </label>
+                      <label title="写入">
+                        <input type="checkbox"
+                          data-key="${key}"
+                          data-user="${u.id}"
+                          data-folder="${f.id}"
+                          data-type="canWrite"
+                          ${canWrite ? 'checked' : ''}
+                          ${changedKey?.canWrite !== undefined ? (changedKey.canWrite ? 'checked' : '') : ''}
+                          onchange="onPermChange(this)">
+                      </label>
+                    </div>
+                  </td>`;
+                }).join('')}
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div style="margin-top:12px;font-size:12px;color:var(--text-tertiary);display:flex;align-items:center;gap:16px;">
+      <span>图例：</span>
+      <span style="display:flex;align-items:center;gap:4px;">
+        <input type="checkbox" checked disabled style="width:13px;height:13px;accent-color:var(--accent);">
+        <span>读</span>
+      </span>
+      <span style="display:flex;align-items:center;gap:4px;">
+        <input type="checkbox" checked disabled style="width:13px;height:13px;accent-color:var(--success);">
+        <span>写</span>
+      </span>
+      <span style="color:var(--text-tertiary);">提示：勾选"读"后"写"才能生效</span>
+    </div>`;
+}
+
+function onPermChange(checkbox) {
+  const key = checkbox.dataset.key;
+  const type = checkbox.dataset.type;
+  const userId = parseInt(checkbox.dataset.user);
+  const folderId = parseInt(checkbox.dataset.folder);
+
+  const perm = matrix[userId]?.folders?.[folderId] || {};
+  const original = type === 'canRead' ? !!perm.canRead : !!perm.canWrite;
+  const current = checkbox.checked;
+
+  if (original === current) {
+    delete changed[key];
+  } else {
+    if (!changed[key]) changed[key] = {};
+    changed[key][type] = current;
+  }
+
+  // Write requires read
+  if (type === 'canRead' && !checkbox.checked) {
+    const writeCb = document.querySelector(`input[data-key="${key}"][data-type="canWrite"]`);
+    if (writeCb) {
+      writeCb.checked = false;
+      writeCb.disabled = true;
+      if (original === false && current === false) {
+        // no change
+      } else {
+        if (!changed[key]) changed[key] = {};
+        changed[key].canWrite = false;
+      }
+    }
+  } else if (type === 'canRead' && checkbox.checked) {
+    const writeCb = document.querySelector(`input[data-key="${key}"][data-type="canWrite"]`);
+    if (writeCb) writeCb.disabled = false;
+  }
+
+  updateSaveBtn();
+}
+
+function updateSaveBtn() {
+  const keys = Object.keys(changed);
+  const countEl = document.getElementById('changeCount');
+  const saveBtn = document.getElementById('saveBtn');
+  countEl.textContent = keys.length > 0 ? `已修改 ${keys.length} 项` : '';
+  saveBtn.disabled = keys.length === 0 || saving;
+}
+
+async function saveMatrix() {
+  if (saving || Object.keys(changed).length === 0) return;
+  saving = true;
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = '保存中...';
+
+  try {
+    for (const [key, val] of Object.entries(changed)) {
+      const [userId, folderId] = key.split('-').map(Number);
+      const canRead = val.canRead !== undefined ? val.canRead : (matrix[userId]?.folders?.[folderId]?.canRead ?? false);
+      const canWrite = val.canWrite !== undefined ? val.canWrite : (matrix[userId]?.folders?.[folderId]?.canWrite ?? false);
+      await Api.setPermission(userId, folderId, canRead, canWrite);
+    }
+    changed = {};
+    showToast('权限已保存', 'success');
+    await loadMatrix();
+  } catch (err) {
+    showToast(err.message || '保存失败', 'error');
+    saving = false;
+    btn.disabled = false;
+    btn.textContent = '保存修改';
+  }
+}
+</script>
+</body>
+</html>

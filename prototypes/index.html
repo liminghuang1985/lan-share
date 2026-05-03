@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAN Share · 设计原型</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0F1011;
+      --bg-secondary: #16181D;
+      --bg-tertiary: #1E2027;
+      --border: #2A2D37;
+      --text-primary: #EDEDEF;
+      --text-secondary: #8A8D93;
+      --text-tertiary: #5C5F66;
+      --accent: #6142D9;
+      --accent-hover: #7151E5;
+      --accent-subtle: rgba(97,66,217,0.15);
+      --success: #10B981;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      padding: 60px 40px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .logo-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--accent), #8B5CF6);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 8px 32px rgba(97,66,217,0.3);
+    }
+
+    .logo-icon svg { width: 26px; height: 26px; fill: white; }
+
+    .logo-text {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .header p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      max-width: 500px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      background: var(--accent-subtle);
+      color: var(--accent);
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 16px;
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 16px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+
+    .card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 20px;
+      cursor: pointer;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+
+    .card:hover {
+      border-color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    .card-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .card-icon svg { width: 20px; height: 20px; fill: white; }
+
+    .card-icon.admin { background: var(--accent); }
+    .card-icon.client { background: var(--success); }
+    .card-icon.dashboard { background: #3B82F6; }
+    .card-icon.users { background: #10B981; }
+    .card-icon.folder { background: #F59E0B; }
+    .card-icon.perm { background: #EC4899; }
+    .card-icon.logs { background: #6366F1; }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .card-subtitle {
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+
+    .card-desc {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .card-footer {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .card-tag {
+      font-size: 11px;
+      padding: 3px 8px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      color: var(--text-secondary);
+    }
+
+    .card-arrow {
+      margin-left: auto;
+      color: var(--text-tertiary);
+      font-size: 14px;
+    }
+
+    .color-bar {
+      height: 3px;
+      border-radius: 2px;
+      margin-bottom: 20px;
+      background: linear-gradient(90deg, var(--accent), #8B5CF6);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="badge">Linear Design System</div>
+      <div class="logo">
+        <div class="logo-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        </div>
+        <span class="logo-text">LAN Share</span>
+      </div>
+      <p>局域网共享文件夹管理系统 · Linear 风格设计原型</p>
+    </div>
+
+    <div class="color-bar"></div>
+
+    <h2 class="section-title">管理端 · Host A（6 页面）</h2>
+    <div class="grid">
+      <a href="01-login.html" class="card">
+        <div class="card-header">
+          <div class="card-icon admin">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </div>
+          <div>
+            <div class="card-title">登录页</div>
+            <div class="card-subtitle">/login</div>
+          </div>
+        </div>
+        <div class="card-desc">管理员账号密码登录，含客户端下载入口</div>
+        <div class="card-footer">
+          <span class="card-tag">认证</span>
+          <span class="card-tag">登录</span>
+          <span class="card-arrow">→</span>
+        </div>
+      </a>
+
+      <a href="02-dashboard.html" class="card">
+        <div class="card-header">
+          <div class="card-icon dashboard">
+            <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          </div>
+          <div>
+            <div class="card-title">仪表盘</div>
+            <div class="card-subtitle">/dashboard</div>
+          </div>
+        </div>
+        <div class="card-desc">统计概览（在线主机/总文件/流量/告警）、最近活动、在线主机列表</div>
+        <div class="card-footer">
+          <span class="card-tag">首页</span>
+          <span class="card-tag">统计</span>
+          <span class="card-arrow">→</span>
+        </div>
+      </a>
+
+      <a href="03-users.html" class="card">
+        <div class="card-header">
+          <div class="card-icon users">
+            <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          </div>
+          <div>
+            <div class="card-title">用户管理</div>
+            <div class="card-subtitle">/users</div>
+          </div>
+        </div>
+        <div class="card-desc">用户列表、搜索筛选、添加/编辑/禁用用户</div>
+        <div class="card-footer">
+          <span class="card-tag">CRUD</span>
+          <span class="card-tag">用户</span>
+          <span class="card-arrow">→</span>
+        </div>
+      </a>
+
+      <a href="04-folders.html" class="card">
+        <div class="card-header">
+          <div class="card-icon folder">
+            <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+          </div>
+          <div>
+            <div class="card-title">文件夹管理</div>
+            <div class="card-subtitle">/folders</div>
+          </div>
+        </div>
+        <div class="card-desc">共享文件夹卡片视图、文件数/大小统计、新建/编辑/删除</div>
+        <div class="card-footer">
+          <span class="card-tag">文件夹</span>
+          <span class="card-tag">目录</span>
+          <span class="card-arrow">→</span>
+        </div>
+      </a>
+
+      <a href="05-permissions.html" class="card">
+        <div class="card-header">
+          <div class="card-icon perm">
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
+          </div>
+          <div>
+            <div class="card-title">权限配置</div>
+            <div class="card-subtitle">/permissions</div>
+          </div>
+        </div>
+        <div class="card-desc">用户↔文件夹权限矩阵、开关快速切换权限</div>
+        <div class="card-footer">
+          <span class="card-tag">权限</span>
+          <span class="card-tag">矩阵</span>
+          <span class="card-arrow">→</span>
+        </div>
+      </a>
+
+      <a href="06-logs.html" class="card">
+        <div class="card-header">
+          <div class="card-icon logs">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
+          </div>
+          <div>
+            <div class="card-title">审计日志</div>
+            <div class="card-subtitle">/logs</div>
+          </div>
+        </div>
+        <div class="card-desc">操作日志列表（上传/下载/删除/登录）、筛选、导出</div>
+        <div class="card-footer">
+          <span class="card-tag">日志</span>
+          <span class="card-tag">审计</span>
+          <span class="card-arrow">→</span>
+        </div>
+      </a>
+    </div>
+
+    <h2 class="section-title">客户端 · Host B/C/D（3 页面）</h2>
+    <div class="grid">
+      <a href="10-client-login.html" class="card">
+        <div class="card-header">
+          <div class="card-icon client">
+            <svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+          </div>
+          <div>
+            <div class="card-title">客户端登录</div>
+            <div class="card-subtitle">/client/login</div>
+          </div>
+        </div>
+        <div class="card-desc">客户端用户登录、访问服务器地址显示</div>
+        <div class="card-footer">
+          <span class="card-tag">客户端</span>
+          <span class="card-tag">登录</span>
+          <span class="card-arrow">→</span>
+        </div>
+      </a>
+
+      <a href="11-client-browse.html" class="card">
+        <div class="card-header">
+          <div class="card-icon client">
+            <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          </div>
+          <div>
+            <div class="card-title">文件浏览器</div>
+            <div class="card-subtitle">/client/browse</div>
+          </div>
+        </div>
+        <div class="card-desc">浏览共享文件夹、上传/下载文件、搜索、侧边栏快速访问</div>
+        <div class="card-footer">
+          <span class="card-tag">客户端</span>
+          <span class="card-tag">文件</span>
+          <span class="card-arrow">→</span>
+        </div>
+      </a>
+
+      <a href="12-client-history.html" class="card">
+        <div class="card-header">
+          <div class="card-icon client">
+            <svg viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>
+          </div>
+          <div>
+            <div class="card-title">我的记录</div>
+            <div class="card-subtitle">/client/history</div>
+          </div>
+        </div>
+        <div class="card-desc">下载/上传历史记录、状态筛选、导出记录</div>
+        <div class="card-footer">
+          <span class="card-tag">客户端</span>
+          <span class="card-tag">历史</span>
+          <span class="card-arrow">→</span>
+        </div>
+      </a>
+    </div>
+
+    <div style="text-align: center; margin-top: 48px; padding-top: 32px; border-top: 1px solid var(--border);">
+      <p style="font-size: 13px; color: var(--text-tertiary);">
+        LAN Share · 局域网共享文件管理系统 v1.0 · Linear Design System
+      </p>
+    </div>
+  </div>
+</body>
+</html>

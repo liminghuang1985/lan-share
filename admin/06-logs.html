@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAN Share · 审计日志</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/shared.css">
+  <style>
+    .action-badge {
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 500;
+      font-family: 'JetBrains Mono', monospace;
+      white-space: nowrap;
+    }
+    .action-login { background: var(--accent-subtle); color: var(--accent); }
+    .action-download { background: var(--success-subtle); color: var(--success); }
+    .action-upload { background: rgba(59,130,246,0.1); color: #3B82F6; }
+    .action-create_user, .action-create_folder { background: var(--success-subtle); color: var(--success); }
+    .action-delete_user, .action-delete_folder { background: var(--error-subtle); color: var(--error); }
+    .action-update_user, .action-update_folder { background: var(--warning-subtle); color: var(--warning); }
+    .action-set_permission, .action-batch_permission { background: rgba(139,92,246,0.12); color: #8B5CF6; }
+    .action-other { background: var(--bg-tertiary); color: var(--text-secondary); }
+    .details-cell { font-size: 12px; color: var(--text-tertiary); max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .status-dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+    .status-dot.success { background: var(--success); }
+    .status-dot.failed { background: var(--error); }
+  </style>
+</head>
+<body>
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        </div>
+        <span class="sidebar-logo-text">LAN Share</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section"><div class="nav-section-title">概览</div>
+        <a href="02-dashboard.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>仪表盘</a>
+      </div>
+      <div class="nav-section"><div class="nav-section-title">管理</div>
+        <a href="03-users.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>用户管理</a>
+        <a href="04-folders.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>文件夹管理</a>
+        <a href="05-permissions.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>权限配置</a>
+      </div>
+      <div class="nav-section"><div class="nav-section-title">日志</div>
+        <a href="06-logs.html" class="nav-item active"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14z"/></svg>审计日志</a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-info">
+        <div class="admin-avatar" id="adminAvatar">管</div>
+        <div><div class="admin-name" id="adminName">管理员</div><div class="admin-role">系统管理员</div></div>
+      </div>
+      <button class="btn btn-ghost" onclick="doLogout()" style="font-size:12px;">
+        <svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        退出登录
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="admin-main">
+    <div class="page-header">
+      <h1>审计日志</h1>
+      <p>查看所有用户操作记录与系统事件</p>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" class="input" id="searchInput" placeholder="搜索操作人、文件名..." style="width:240px;">
+        </div>
+        <select class="input filter-select" id="actionFilter">
+          <option value="">全部操作</option>
+          <option value="login">登录</option>
+          <option value="download">下载</option>
+          <option value="upload">上传</option>
+          <option value="create_user">创建用户</option>
+          <option value="delete_user">删除用户</option>
+          <option value="update_user">更新用户</option>
+          <option value="set_permission">权限修改</option>
+          <option value="batch_permission">批量权限</option>
+          <option value="create_folder">创建文件夹</option>
+          <option value="delete_folder">删除文件夹</option>
+        </select>
+        <select class="input filter-select" id="statusFilter">
+          <option value="">全部状态</option>
+          <option value="success">成功</option>
+          <option value="failed">失败</option>
+        </select>
+        <input type="date" class="input" id="startDate" style="width:140px;" title="开始日期">
+        <input type="date" class="input" id="endDate" style="width:140px;" title="结束日期">
+      </div>
+      <div class="toolbar-right">
+        <button class="btn btn-ghost" onclick="exportLogs()" id="exportBtn">
+          <svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+          导出 CSV
+        </button>
+      </div>
+    </div>
+
+    <div class="card" style="overflow:hidden;">
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:140px;">时间</th>
+              <th style="width:100px;">操作人</th>
+              <th style="width:120px;">操作类型</th>
+              <th>详情</th>
+              <th style="width:110px;">IP 地址</th>
+              <th style="width:70px;">状态</th>
+            </tr>
+          </thead>
+          <tbody id="logsTable">
+            <tr><td colspan="6" class="loading-state"><span class="spinner"></span><span>加载中...</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="pagination" id="pagination" style="display:none;">
+      <span class="pagination-info" id="paginationInfo"></span>
+      <div class="pagination-controls" id="paginationControls"></div>
+    </div>
+  </main>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+<script>
+let logs = [];
+let total = 0;
+let page = 1;
+const limit = 50;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  Theme.init();
+  const ok = await requireAdmin();
+  if (!ok) return;
+  highlightNav('06-logs.html');
+  const user = getCurrentUser() || {};
+  document.getElementById('adminName').textContent = user.display_name || user.username || '管理员';
+  document.getElementById('adminAvatar').textContent = (user.display_name || user.username || '管')[0].toUpperCase();
+
+  document.getElementById('searchInput').addEventListener('input', debounce(() => { page = 1; loadLogs(); }, 350));
+  document.getElementById('actionFilter').addEventListener('change', () => { page = 1; loadLogs(); });
+  document.getElementById('statusFilter').addEventListener('change', () => { page = 1; loadLogs(); });
+  document.getElementById('startDate').addEventListener('change', () => { page = 1; loadLogs(); });
+  document.getElementById('endDate').addEventListener('change', () => { page = 1; loadLogs(); });
+
+  await loadLogs();
+});
+
+async function loadLogs() {
+  const tbody = document.getElementById('logsTable');
+  tbody.innerHTML = '<tr><td colspan="6" class="loading-state"><span class="spinner"></span><span>加载中...</span></td></tr>';
+
+  const params = {
+    page, limit,
+    action: document.getElementById('actionFilter').value,
+    status: document.getElementById('statusFilter').value,
+    startDate: document.getElementById('startDate').value,
+    endDate: document.getElementById('endDate').value
+  };
+
+  try {
+    const data = await Api.getAuditLogs(params);
+    logs = data.logs || [];
+    total = data.total || 0;
+    renderLogs();
+    renderPagination();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">加载失败：${err.message}</td></tr>`;
+    showToast('加载审计日志失败', 'error');
+  }
+}
+
+function renderLogs() {
+  const tbody = document.getElementById('logsTable');
+  if (!logs.length) {
+    tbody.innerHTML = '<tr><td colspan="6"><div class="empty-state"><p>暂无日志记录</p></div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = logs.map(log => {
+    const actionClass = getActionClass(log.action);
+    const actionText = getActionText(log.action);
+    const statusClass = log.status === 'success' ? 'success' : 'failed';
+    const statusText = log.status === 'success' ? '成功' : '失败';
+    const details = getLogDetails(log);
+
+    return `<tr>
+      <td style="font-size:12px;color:var(--text-tertiary);white-space:nowrap;">${formatDate(log.created_at)}</td>
+      <td><span style="font-size:13px;font-weight:500;">${escapeHtml(log.username || '-')}</span></td>
+      <td><span class="action-badge ${actionClass}">${actionText}</span></td>
+      <td><div class="details-cell" title="${escapeHtml(details)}">${escapeHtml(details)}</div></td>
+      <td style="font-size:12px;color:var(--text-tertiary);font-family:'JetBrains Mono',monospace;">${escapeHtml(log.ip_address || '-')}</td>
+      <td><span style="display:flex;align-items:center;font-size:12px;"><span class="status-dot ${statusClass}"></span>${statusText}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function getActionClass(action) {
+  const map = {
+    login: 'action-login', logout: 'action-login',
+    download: 'action-download', upload: 'action-upload',
+    create_user: 'action-create_user', delete_user: 'action-delete_user', update_user: 'action-update_user',
+    create_folder: 'action-create_folder', delete_folder: 'action-delete_folder',
+    set_permission: 'action-set_permission', batch_permission: 'action-set_permission',
+    batch_user: 'action-update_user'
+  };
+  return map[action] || 'action-other';
+}
+
+function getActionText(action) {
+  const map = {
+    login: '登录', logout: '登出',
+    download: '下载', upload: '上传',
+    create_user: '创建用户', delete_user: '删除用户', update_user: '更新用户',
+    create_folder: '创建文件夹', delete_folder: '删除文件夹',
+    set_permission: '权限修改', batch_permission: '批量权限',
+    batch_user: '批量操作', batch_folder: '批量文件夹'
+  };
+  return map[action] || action;
+}
+
+function getLogDetails(log) {
+  if (!log.details) return '-';
+  try {
+    const d = JSON.parse(log.details);
+    if (log.action === 'download' || log.action === 'upload') return d.originalName || d.fileName || '-';
+    if (log.action === 'create_user') return `用户名: ${d.username}`;
+    if (log.action === 'delete_user') return `用户名: ${d.username}`;
+    if (log.action === 'delete_folder') return `文件夹: ${d.name || d.folderName}`;
+    if (log.action === 'set_permission') return `用户ID: ${d.userId}, 文件夹ID: ${d.folderId}`;
+    if (log.action === 'batch_permission') return `用户ID: ${d.userId}, ${d.count} 项权限`;
+    return JSON.stringify(d);
+  } catch {
+    return log.details;
+  }
+}
+
+function renderPagination() {
+  const container = document.getElementById('pagination');
+  const info = document.getElementById('paginationInfo');
+  const controls = document.getElementById('paginationControls');
+  if (total === 0) { container.style.display = 'none'; return; }
+  const totalPages = Math.ceil(total / limit);
+  container.style.display = 'flex';
+  const from = (page - 1) * limit + 1;
+  const to = Math.min(page * limit, total);
+  info.textContent = `显示 ${from}-${to} 条，共 ${total} 条`;
+  const pages = getPageNumbers(page, totalPages);
+  controls.innerHTML = pages.map(p => p === '...' ? `<span class="page-ellipsis">...</span>` : `<button class="page-btn ${p === page ? 'active' : ''}" onclick="goPage(${p})">${p}</button>`).join('');
+}
+
+function getPageNumbers(c, t) {
+  if (t <= 7) return range(1, t);
+  const p = [1];
+  if (c > 3) p.push('...');
+  for (let i = Math.max(2, c - 1); i <= Math.min(t - 1, c + 1); i++) p.push(i);
+  if (c < t - 2) p.push('...');
+  p.push(t);
+  return p;
+}
+
+function range(s, e) { return Array.from({ length: e - s + 1 }, (_, i) => s + i); }
+function goPage(p) { page = p; loadLogs(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+async function exportLogs() {
+  const btn = document.getElementById('exportBtn');
+  btn.disabled = true;
+  btn.textContent = '导出中...';
+  try {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+    const csv = await Api.exportAuditLogs({ startDate, endDate });
+
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `审计日志_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    showToast('导出成功', 'success');
+  } catch (err) {
+    showToast('导出失败：' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>导出 CSV`;
+  }
+}
+</script>
+</body>
+</html>

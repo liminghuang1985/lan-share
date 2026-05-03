@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAN Share · 权限配置</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0F1011;
+      --bg-secondary: #16181D;
+      --bg-tertiary: #1E2027;
+      --border: #2A2D37;
+      --border-subtle: #22262F;
+      --text-primary: #EDEDEF;
+      --text-secondary: #8A8D93;
+      --text-tertiary: #5C5F66;
+      --accent: #6142D9;
+      --accent-hover: #7151E5;
+      --accent-subtle: rgba(97,66,217,0.12);
+      --success: #10B981;
+      --warning: #F59E0B;
+      --error: #EF4444;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    .layout { display: flex; min-height: 100vh; }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      height: 100vh;
+      z-index: 100;
+    }
+
+    .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border-subtle); }
+
+    .logo { display: flex; align-items: center; gap: 10px; }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent), #8B5CF6);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .logo-icon svg { width: 18px; height: 18px; fill: white; }
+    .logo-text { font-size: 16px; font-weight: 600; }
+
+    .sidebar-nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
+    .nav-section { margin-bottom: 24px; }
+
+    .nav-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 0 12px;
+      margin-bottom: 8px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      text-decoration: none;
+    }
+
+    .nav-item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+    .nav-item.active { background: var(--accent-subtle); color: var(--accent); }
+    .nav-item svg { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+
+    .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border-subtle); }
+
+    .admin-info { display: flex; align-items: center; gap: 10px; }
+
+    .admin-avatar {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #10B981, #059669);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+      color: white;
+    }
+
+    .admin-details { flex: 1; min-width: 0; }
+    .admin-name { font-size: 13px; font-weight: 500; }
+    .admin-role { font-size: 11px; color: var(--text-tertiary); }
+
+    /* Main */
+    .main { flex: 1; margin-left: 240px; padding: 24px 32px; }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 28px;
+    }
+
+    .page-header-left h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+    .page-header-left p { font-size: 14px; color: var(--text-secondary); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 500;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      text-decoration: none;
+    }
+
+    .btn svg { width: 16px; height: 16px; fill: currentColor; }
+
+    .btn-primary { background: var(--accent); border: 1px solid var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent-hover); }
+
+    /* Info Banner */
+    .info-banner {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 16px;
+      background: rgba(59, 130, 246, 0.1);
+      border: 1px solid rgba(59, 130, 246, 0.2);
+      border-radius: 8px;
+      margin-bottom: 24px;
+    }
+
+    .info-banner svg { width: 20px; height: 20px; fill: #3B82F6; flex-shrink: 0; }
+
+    .info-banner-text { font-size: 13px; color: var(--text-secondary); }
+    .info-banner-text strong { color: var(--text-primary); font-weight: 500; }
+
+    /* Permission Matrix */
+    .matrix-container {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .matrix-header {
+      display: flex;
+      align-items: center;
+      padding: 14px 20px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .matrix-header-label {
+      width: 160px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      flex-shrink: 0;
+    }
+
+    .matrix-header-folders {
+      display: flex;
+      flex: 1;
+      gap: 4px;
+    }
+
+    .folder-header-cell {
+      flex: 1;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      padding: 6px 4px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+    }
+
+    .matrix-body { }
+
+    .matrix-row {
+      display: flex;
+      align-items: center;
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background 0.15s;
+    }
+
+    .matrix-row:last-child { border-bottom: none; }
+    .matrix-row:hover { background: rgba(255,255,255,0.02); }
+
+    .user-cell {
+      width: 160px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+
+    .user-avatar {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+      flex-shrink: 0;
+    }
+
+    .user-avatar.blue { background: #3B82F6; }
+    .user-avatar.green { background: var(--success); }
+    .user-avatar.orange { background: var(--warning); }
+    .user-avatar.purple { background: var(--accent); }
+
+    .user-name { font-size: 13px; font-weight: 500; }
+
+    .permissions-cell {
+      display: flex;
+      flex: 1;
+      gap: 4px;
+    }
+
+    .permission-toggle {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .toggle {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 14px;
+      height: 14px;
+      background: var(--text-tertiary);
+      border-radius: 50%;
+      transition: transform 0.2s, background 0.2s;
+    }
+
+    .toggle.active {
+      background: var(--accent-subtle);
+      border-color: var(--accent);
+    }
+
+    .toggle.active::after {
+      transform: translateX(16px);
+      background: var(--accent);
+    }
+
+    /* Legend */
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-top: 16px;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-radius: 6px;
+    }
+
+    .legend-title { font-size: 12px; color: var(--text-tertiary); }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 2px;
+    }
+
+    .legend-dot.read { background: var(--success); }
+    .legend-dot.write { background: #3B82F6; }
+    .legend-dot.admin { background: var(--warning); }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">
+          <div class="logo-icon">
+            <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+          </div>
+          <span class="logo-text">LAN Share</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <div class="nav-section-title">概览</div>
+          <a href="02-dashboard.html" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+            仪表盘
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">管理</div>
+          <a href="03-users.html" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+            用户管理
+          </a>
+          <a href="04-folders.html" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+            文件夹管理
+          </a>
+          <a href="#" class="nav-item active">
+            <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+            权限配置
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <div class="nav-section-title">日志</div>
+          <a href="#" class="nav-item">
+            <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
+            审计日志
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="admin-info">
+          <div class="admin-avatar">管</div>
+          <div class="admin-details">
+            <div class="admin-name">管理员</div>
+            <div class="admin-role">系统管理员</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>权限配置</h1>
+          <p>管理用户对共享文件夹的访问权限</p>
+        </div>
+        <button class="btn btn-primary">
+          <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          保存更改
+        </button>
+      </div>
+
+      <div class="info-banner">
+        <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z"/></svg>
+        <div class="info-banner-text">
+          <strong>权限说明：</strong>点击开关可快速切换用户权限。权限变更即时生效。
+        </div>
+      </div>
+
+      <div class="matrix-container">
+        <div class="matrix-header">
+          <div class="matrix-header-label">用户</div>
+          <div class="matrix-header-folders">
+            <div class="folder-header-cell">项目文档</div>
+            <div class="folder-header-cell">财务报表</div>
+            <div class="folder-header-cell">视频素材</div>
+            <div class="folder-header-cell">人力资源</div>
+          </div>
+        </div>
+
+        <div class="matrix-body">
+          <!-- Row 1 -->
+          <div class="matrix-row">
+            <div class="user-cell">
+              <div class="user-avatar blue">张</div>
+              <div class="user-name">张明</div>
+            </div>
+            <div class="permissions-cell">
+              <div class="permission-toggle">
+                <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="permission-toggle">
+                <div class="toggle" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="permission-toggle">
+                <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="permission-toggle">
+                <div class="toggle" onclick="this.classList.toggle('active')"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 2 -->
+          <div class="matrix-row">
+            <div class="user-cell">
+              <div class="user-avatar green">李</div>
+              <div class="user-name">李华</div>
+            </div>
+            <div class="permissions-cell">
+              <div class="permission-toggle">
+                <div class="toggle" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="permission-toggle">
+                <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="permission-toggle">
+                <div class="toggle" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="permission-toggle">
+                <div class="toggle" onclick="this.classList.toggle('active')"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3 -->
+          <div class="matrix-row">
+            <div class="user-cell">
+              <div class="user-avatar orange">王</div>
+              <div class="user-name">王芳</div>
+            </div>
+            <div class="permissions-cell">
+              <div class="permission-toggle">
+                <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="permission-toggle">
+                <div class="toggle" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="permission-toggle">
+                <div class="toggle" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="permission-toggle">
+                <div class="toggle" onclick="this.classList.toggle('active')"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 4 -->
+          <div class="matrix-row">
+            <div class="user-cell">
+              <div class="user-avatar purple">赵</div>
+              <div class="user-name">赵强</div>
+            </div>
+            <div class="permissions-cell">
+              <div class="permission-toggle">
+                <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="permission-toggle">
+                <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="permission-toggle">
+                <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+              </div>
+              <div class="permission-toggle">
+                <div class="toggle active" onclick="this.classList.toggle('active')"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <span class="legend-title">图例：</span>
+        <div class="legend-item">
+          <div class="legend-dot read"></div>
+          读取
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot write"></div>
+          上传
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot admin"></div>
+          管理
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>

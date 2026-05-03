@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAN Share · 用户管理</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/shared.css">
+</head>
+<body>
+<div class="admin-layout">
+
+  <!-- Sidebar (same as dashboard) -->
+  <aside class="admin-sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">
+        <div class="sidebar-logo-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        </div>
+        <span class="sidebar-logo-text">LAN Share</span>
+      </div>
+    </div>
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-title">概览</div>
+        <a href="02-dashboard.html" class="nav-item">
+          <svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+          仪表盘
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">管理</div>
+        <a href="03-users.html" class="nav-item active" id="nav-users">
+          <svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>
+          用户管理
+        </a>
+        <a href="04-folders.html" class="nav-item" id="nav-folders">
+          <svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>
+          文件夹管理
+        </a>
+        <a href="05-permissions.html" class="nav-item" id="nav-permissions">
+          <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z"/></svg>
+          权限配置
+        </a>
+      </div>
+      <div class="nav-section">
+        <div class="nav-section-title">日志</div>
+        <a href="06-logs.html" class="nav-item" id="nav-logs">
+          <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
+          审计日志
+        </a>
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="admin-info">
+        <div class="admin-avatar" id="adminAvatar">管</div>
+        <div>
+          <div class="admin-name" id="adminName">管理员</div>
+          <div class="admin-role">系统管理员</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost" onclick="doLogout()" style="font-size:12px;">
+        <svg viewBox="0 0 24 24" style="width:15px;height:15px;fill:currentColor"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
+        退出登录
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main -->
+  <main class="admin-main">
+    <div class="page-header">
+      <h1>用户管理</h1>
+      <p>管理系统用户账号与权限</p>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
+          <input type="text" class="input" id="searchInput" placeholder="搜索用户名、姓名、邮箱..." style="width:260px;">
+        </div>
+        <select class="input filter-select" id="roleFilter">
+          <option value="">全部角色</option>
+          <option value="admin">管理员</option>
+          <option value="user">普通用户</option>
+          <option value="readonly">只读用户</option>
+        </select>
+        <select class="input filter-select" id="statusFilter">
+          <option value="">全部状态</option>
+          <option value="active">正常</option>
+          <option value="disabled">已禁用</option>
+        </select>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn btn-primary" onclick="openCreateModal()">
+          <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
+          新建用户
+        </button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card" style="overflow:hidden;">
+      <div style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th style="width:40px;">
+                <label class="checkbox">
+                  <input type="checkbox" id="checkAll" onchange="toggleAll(this)">
+                </label>
+              </th>
+              <th>用户</th>
+              <th>部门</th>
+              <th>角色</th>
+              <th>状态</th>
+              <th>最后登录</th>
+              <th>注册时间</th>
+              <th style="text-align:right">操作</th>
+            </tr>
+          </thead>
+          <tbody id="usersTable">
+            <tr><td colspan="8" class="loading-state"><span class="spinner"></span><span>加载中...</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination" id="pagination" style="display:none;">
+      <span class="pagination-info" id="paginationInfo"></span>
+      <div class="pagination-controls" id="paginationControls"></div>
+    </div>
+  </main>
+</div>
+
+<!-- Create/Edit Modal -->
+<div id="userModal"></div>
+
+<script src="js/api.js"></script>
+<script src="js/admin.js"></script>
+<script>
+// State
+let users = [];
+let total = 0;
+let page = 1;
+const limit = 20;
+let searchTimer;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  Theme.init();
+  const ok = await requireAdmin();
+  if (!ok) return;
+  highlightNav('03-users.html');
+  const user = getCurrentUser() || {};
+  document.getElementById('adminName').textContent = user.display_name || user.username || '管理员';
+  document.getElementById('adminAvatar').textContent = (user.display_name || user.username || '管')[0].toUpperCase();
+
+  document.getElementById('searchInput').addEventListener('input', debounce(() => { page = 1; loadUsers(); }, 350));
+  document.getElementById('roleFilter').addEventListener('change', () => { page = 1; loadUsers(); });
+  document.getElementById('statusFilter').addEventListener('change', () => { page = 1; loadUsers(); });
+
+  await loadUsers();
+});
+
+async function loadUsers() {
+  const tbody = document.getElementById('usersTable');
+  tbody.innerHTML = '<tr><td colspan="8" class="loading-state"><span class="spinner"></span><span>加载中...</span></td></tr>';
+
+  const params = {
+    page, limit,
+    search: document.getElementById('searchInput').value.trim(),
+    role: document.getElementById('roleFilter').value,
+    status: document.getElementById('statusFilter').value
+  };
+
+  try {
+    const data = await Api.getUsers(params);
+    users = data.users || [];
+    total = data.total || 0;
+    renderUsers();
+    renderPagination();
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-state">加载失败：${err.message}</td></tr>`;
+    showToast('加载用户列表失败', 'error');
+  }
+}
+
+function renderUsers() {
+  const tbody = document.getElementById('usersTable');
+
+  if (!users.length) {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><p>暂无用户</p></div></td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = users.map(u => {
+    const roleBadge = u.role === 'admin' ? 'badge-accent' : u.role === 'readonly' ? 'badge-warning' : 'badge-gray';
+    const roleText = u.role === 'admin' ? '管理员' : u.role === 'readonly' ? '只读' : '普通';
+    const statusBadge = u.status === 'active' ? 'badge-success' : 'badge-error';
+    const statusText = u.status === 'active' ? '正常' : '已禁用';
+    const initials = (u.display_name || u.username || '?')[0].toUpperCase();
+
+    return `<tr data-id="${u.id}">
+      <td><label class="checkbox"><input type="checkbox" class="row-check" value="${u.id}" onchange="updateCheckAll()"></label></td>
+      <td>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <div style="width:32px;height:32px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:white;flex-shrink:0;">${initials}</div>
+          <div style="min-width:0;">
+            <div style="font-weight:500;font-size:13px;">${escapeHtml(u.display_name || u.username)}</div>
+            <div style="font-size:11px;color:var(--text-tertiary);">${escapeHtml(u.email || '-')}</div>
+          </div>
+        </div>
+      </td>
+      <td style="color:var(--text-secondary);font-size:13px;">${escapeHtml(u.department || '-')}</td>
+      <td><span class="badge ${roleBadge}">${roleText}</span></td>
+      <td><span class="badge ${statusBadge}">${statusText}</span></td>
+      <td style="font-size:12px;color:var(--text-tertiary);">${formatRelativeTime(u.last_login)}</td>
+      <td style="font-size:12px;color:var(--text-tertiary);">${formatDateShort(u.created_at)}</td>
+      <td class="col-actions">
+        <div class="btn-group">
+          <button class="btn btn-ghost btn-sm" onclick="openEditModal(${u.id})">编辑</button>
+          <button class="btn btn-ghost btn-sm" style="color:var(--error);" onclick="confirmDelete(${u.id}, '${escapeHtml(u.username)}')">删除</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+}
+
+function toggleAll(el) {
+  document.querySelectorAll('.row-check').forEach(cb => { cb.checked = el.checked; });
+}
+
+function updateCheckAll() {
+  const all = document.querySelectorAll('.row-check');
+  const checked = document.querySelectorAll('.row-check:checked');
+  document.getElementById('checkAll').checked = all.length > 0 && checked.length === all.length;
+  document.getElementById('checkAll').indeterminate = checked.length > 0 && checked.length < all.length;
+}
+
+function renderPagination() {
+  const container = document.getElementById('pagination');
+  const info = document.getElementById('paginationInfo');
+  const controls = document.getElementById('paginationControls');
+
+  if (total === 0) { container.style.display = 'none'; return; }
+
+  const totalPages = Math.ceil(total / limit);
+  container.style.display = 'flex';
+  const from = (page - 1) * limit + 1;
+  const to = Math.min(page * limit, total);
+  info.textContent = `显示 ${from}-${to} 条，共 ${total} 条`;
+
+  const pages = getPageNumbers(page, totalPages);
+  controls.innerHTML = pages.map(p => {
+    if (p === '...') return `<span class="page-ellipsis">...</span>`;
+    return `<button class="page-btn ${p === page ? 'active' : ''}" onclick="goPage(${p})">${p}</button>`;
+  }).join('');
+}
+
+function getPageNumbers(current, total) {
+  if (total <= 7) return range(1, total);
+  const pages = [1];
+  if (current > 3) pages.push('...');
+  for (let i = Math.max(2, current - 1); i <= Math.min(total - 1, current + 1); i++) pages.push(i);
+  if (current < total - 2) pages.push('...');
+  pages.push(total);
+  return pages;
+}
+
+function range(start, end) { return Array.from({ length: end - start + 1 }, (_, i) => start + i); }
+
+function goPage(p) { page = p; loadUsers(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+// ===== Create / Edit Modal =====
+function openCreateModal() {
+  openUserModal();
+}
+
+function openEditModal(id) {
+  const user = users.find(u => u.id === id);
+  if (!user) return;
+  openUserModal(user);
+}
+
+function openUserModal(user = null) {
+  const isEdit = !!user;
+  document.getElementById('userModal').innerHTML = `
+    <div class="modal-overlay" onclick="closeModal()">
+      <div class="modal" onclick="event.stopPropagation()">
+        <div class="modal-header">
+          <span class="modal-title">${isEdit ? '编辑用户' : '新建用户'}</span>
+          <button class="btn-icon" onclick="closeModal()">
+            <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-row">
+            <div class="form-group">
+              <label>用户名 *</label>
+              <input type="text" class="input" id="m-username" value="${isEdit ? escapeHtml(user.username) : ''}" ${isEdit ? 'readonly style="opacity:0.6;cursor:not-allowed;"' : ''} placeholder="登录用户名">
+            </div>
+            <div class="form-group">
+              <label>${isEdit ? '新密码（留空不变）' : '密码 *'}</label>
+              <input type="password" class="input" id="m-password" placeholder="${isEdit ? '留空则不修改' : '请输入密码'}">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>姓名 *</label>
+              <input type="text" class="input" id="m-displayName" value="${isEdit ? escapeHtml(user.display_name || '') : ''}" placeholder="显示名称">
+            </div>
+            <div class="form-group">
+              <label>部门</label>
+              <input type="text" class="input" id="m-department" value="${isEdit ? escapeHtml(user.department || '') : ''}" placeholder="所属部门">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>邮箱</label>
+              <input type="email" class="input" id="m-email" value="${isEdit ? escapeHtml(user.email || '') : ''}" placeholder="email@example.com">
+            </div>
+            <div class="form-group">
+              <label>角色</label>
+              <select class="input" id="m-role">
+                <option value="user" ${isEdit && user.role === 'user' ? 'selected' : ''}>普通用户</option>
+                <option value="readonly" ${isEdit && user.role === 'readonly' ? 'selected' : ''}>只读用户</option>
+                <option value="admin" ${isEdit && user.role === 'admin' ? 'selected' : ''}>管理员</option>
+              </select>
+            </div>
+          </div>
+          ${isEdit ? `<div class="form-group">
+            <label>状态</label>
+            <select class="input" id="m-status">
+              <option value="active" ${user.status === 'active' ? 'selected' : ''}>正常</option>
+              <option value="disabled" ${user.status === 'disabled' ? 'selected' : ''}>已禁用</option>
+            </select>
+          </div>` : ''}
+          <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+            <button class="btn btn-primary" id="modalSaveBtn" onclick="saveUser(${isEdit ? user.id : 'null'})">${isEdit ? '保存修改' : '创建用户'}</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function saveUser(id) {
+  const username = document.getElementById('m-username').value.trim();
+  const password = document.getElementById('m-password').value;
+  const display_name = document.getElementById('m-displayName').value.trim();
+  const email = document.getElementById('m-email').value.trim();
+  const department = document.getElementById('m-department').value.trim();
+  const role = document.getElementById('m-role').value;
+  const status = document.getElementById('m-status')?.value;
+
+  if (!username) { showToast('请输入用户名', 'error'); return; }
+  if (!id && !password) { showToast('请输入密码', 'error'); return; }
+  if (!display_name) { showToast('请输入姓名', 'error'); return; }
+
+  const btn = document.getElementById('modalSaveBtn');
+  btn.disabled = true;
+  btn.textContent = '保存中...';
+
+  try {
+    const payload = { username, display_name, email, department, role };
+    if (password) payload.password = password;
+    if (status) payload.status = status;
+
+    if (id) {
+      await Api.updateUser(id, payload);
+      showToast('用户已更新', 'success');
+    } else {
+      await Api.createUser({ ...payload, password });
+      showToast('用户已创建', 'success');
+    }
+    closeModal();
+    loadUsers();
+  } catch (err) {
+    showToast(err.message || '保存失败', 'error');
+    btn.disabled = false;
+    btn.textContent = id ? '保存修改' : '创建用户';
+  }
+}
+
+function confirmDelete(id, username) {
+  showModal({
+    title: '确认删除',
+    body: `<p style="font-size:14px;color:var(--text-secondary);">确定要删除用户 <strong>${escapeHtml(username)}</strong> 吗？此操作不可恢复，相关权限也会被清除。</p>`,
+    confirmText: '删除',
+    danger: true,
+    onConfirm: async () => {
+      try {
+        await Api.deleteUser(id);
+        showToast('用户已删除', 'success');
+        loadUsers();
+      } catch (err) {
+        showToast(err.message || '删除失败', 'error');
+      }
+    }
+  });
+}
+</script>
+</body>
+</html>

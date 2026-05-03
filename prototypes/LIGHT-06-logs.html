@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LAN Share · 审计日志</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #F5F6F8;
+      --bg-secondary: #FFFFFF;
+      --bg-tertiary: #EEF0F3;
+      --border: #E2E5EA;
+      --border-subtle: #F0F1F3;
+      --text-primary: #1A1D21;
+      --text-secondary: #5C6068;
+      --text-tertiary: #9CA3AF;
+      --accent: #6142D9;
+      --accent-hover: #5236C6;
+      --accent-subtle: rgba(97,66,217,0.08);
+      --success: #10B981;
+      --warning: #F59E0B;
+      --error: #EF4444;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
+    .layout { display: flex; min-height: 100vh; }
+    .sidebar { width: 240px; background: var(--bg-secondary); border-right: 1px solid var(--border); display: flex; flex-direction: column; position: fixed; height: 100vh; z-index: 100; }
+    .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border-subtle); }
+    .logo { display: flex; align-items: center; gap: 10px; }
+    .logo-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), #8B5CF6); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .logo-icon svg { width: 18px; height: 18px; fill: white; }
+    .logo-text { font-size: 16px; font-weight: 600; }
+    .sidebar-nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
+    .nav-section { margin-bottom: 24px; }
+    .nav-section-title { font-size: 11px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; padding: 0 12px; margin-bottom: 8px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 6px; font-size: 14px; color: var(--text-secondary); cursor: pointer; transition: background 0.15s, color 0.15s; text-decoration: none; }
+    .nav-item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+    .nav-item.active { background: var(--accent-subtle); color: var(--accent); }
+    .nav-item svg { width: 18px; height: 18px; fill: currentColor; flex-shrink: 0; }
+    .sidebar-footer { padding: 16px 20px; border-top: 1px solid var(--border-subtle); }
+    .admin-info { display: flex; align-items: center; gap: 10px; }
+    .admin-avatar { width: 32px; height: 32px; background: linear-gradient(135deg, var(--accent), #8B5CF6); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600; color: white; }
+    .admin-details { flex: 1; min-width: 0; }
+    .admin-name { font-size: 13px; font-weight: 500; }
+    .admin-role { font-size: 11px; color: var(--text-tertiary); }
+    .main { flex: 1; margin-left: 240px; padding: 24px 32px; }
+    .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 28px; }
+    .page-header-left h1 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+    .page-header-left p { font-size: 14px; color: var(--text-secondary); }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 6px; font-size: 14px; font-weight: 500; font-family: inherit; cursor: pointer; transition: background 0.15s; text-decoration: none; }
+    .btn svg { width: 16px; height: 16px; fill: currentColor; }
+    .btn-secondary { background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); }
+    .btn-secondary:hover { background: var(--bg-tertiary); }
+    .filters { display: flex; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; align-items: center; }
+    .filter-select { position: relative; }
+    .filter-select select { appearance: none; padding: 8px 32px 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: inherit; color: var(--text-primary); cursor: pointer; }
+    .filter-select select:focus { outline: none; border-color: var(--accent); }
+    .filter-select::after { content: ''; position: absolute; right: 12px; top: 50%; transform: translateY(-50%); border-left: 4px solid transparent; border-right: 4px solid transparent; border-top: 5px solid var(--text-tertiary); pointer-events: none; }
+    .date-range { display: flex; align-items: center; gap: 8px; }
+    .date-input { padding: 8px 12px; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; font-family: inherit; color: var(--text-primary); }
+    .date-input:focus { outline: none; border-color: var(--accent); }
+    .log-stream { background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .log-header { display: flex; align-items: center; gap: 6px; padding: 12px 16px; background: var(--bg-tertiary); border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 600; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; }
+    .log-col { padding: 0 8px; }
+    .log-col-user { width: 120px; }
+    .log-col-action { width: 120px; }
+    .log-col-file { flex: 1; }
+    .log-col-ip { width: 130px; }
+    .log-col-time { width: 160px; text-align: right; }
+    .log-entry { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border-subtle); transition: background 0.15s; font-size: 13px; }
+    .log-entry:last-child { border-bottom: none; }
+    .log-entry:hover { background: rgba(97,66,217,0.02); }
+    .log-icon { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 4px; }
+    .log-icon svg { width: 14px; height: 14px; fill: white; }
+    .log-icon.download { background: var(--success); }
+    .log-icon.upload { background: #3B82F6; }
+    .log-icon.delete { background: var(--error); }
+    .log-icon.login { background: var(--accent); }
+    .log-icon.logout { background: var(--text-tertiary); }
+    .log-user { font-weight: 500; }
+    .log-action-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+    .log-action-tag.download { background: rgba(16,185,129,0.1); color: var(--success); }
+    .log-action-tag.upload { background: rgba(59,130,246,0.1); color: #3B82F6; }
+    .log-action-tag.delete { background: rgba(239,68,68,0.1); color: var(--error); }
+    .log-action-tag.login { background: var(--accent-subtle); color: var(--accent); }
+    .log-file { color: var(--text-secondary); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+    .log-ip { color: var(--text-tertiary); font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+    .log-time { color: var(--text-tertiary); font-size: 12px; text-align: right; }
+    .pagination { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border-top: 1px solid var(--border-subtle); }
+    .pagination-info { font-size: 13px; color: var(--text-secondary); }
+    .pagination-controls { display: flex; gap: 4px; }
+    .page-btn { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; color: var(--text-secondary); cursor: pointer; }
+    .page-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+    .page-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="sidebar-header"><div class="logo"><div class="logo-icon"><svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg></div><span class="logo-text">LAN Share</span></div></div>
+      <nav class="sidebar-nav">
+        <div class="nav-section"><div class="nav-section-title">概览</div><a href="LIGHT-02-dashboard.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>仪表盘</a></div>
+        <div class="nav-section"><div class="nav-section-title">管理</div><a href="LIGHT-03-users.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5z"/></svg>用户管理</a><a href="LIGHT-04-folders.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/></svg>文件夹管理</a><a href="LIGHT-05-permissions.html" class="nav-item"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>权限配置</a></div>
+        <div class="nav-section"><div class="nav-section-title">日志</div><a href="#" class="nav-item active"><svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>审计日志</a></div>
+      </nav>
+      <div class="sidebar-footer"><div class="admin-info"><div class="admin-avatar">管</div><div class="admin-details"><div class="admin-name">管理员</div><div class="admin-role">系统管理员</div></div></div></div>
+    </aside>
+
+    <main class="main">
+      <div class="page-header">
+        <div class="page-header-left"><h1>审计日志</h1><p>记录所有文件操作和用户行为</p></div>
+        <button class="btn btn-secondary"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>导出日志</button>
+      </div>
+
+      <div class="filters">
+        <div class="filter-select">
+          <select><option>全部用户</option><option>张明</option><option>李华</option><option>王芳</option></select>
+        </div>
+        <div class="filter-select">
+          <select><option>全部操作</option><option>下载</option><option>上传</option><option>删除</option><option>登录</option></select>
+        </div>
+        <div class="filter-select">
+          <select><option>全部文件夹</option><option>项目文档</option><option>财务报表</option></select>
+        </div>
+        <div class="date-range">
+          <input type="date" class="date-input" value="2026-05-01">
+          <span style="color:var(--text-tertiary)">—</span>
+          <input type="date" class="date-input" value="2026-05-03">
+        </div>
+      </div>
+
+      <div class="log-stream">
+        <div class="log-header">
+          <div class="log-col log-col-user">用户</div>
+          <div class="log-col log-col-action">操作</div>
+          <div class="log-col log-col-file">文件</div>
+          <div class="log-col log-col-ip">IP 地址</div>
+          <div class="log-col log-col-time">时间</div>
+        </div>
+        <div class="log-entry">
+          <div class="log-icon download"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></div>
+          <div class="log-col log-col-user"><span class="log-user">张明</span></div>
+          <div class="log-col log-col-action"><span class="log-action-tag download">下载</span></div>
+          <div class="log-col log-col-file"><span class="log-file">项目文档_v2.zip</span></div>
+          <div class="log-col log-col-ip"><span class="log-ip">192.168.1.101</span></div>
+          <div class="log-col log-col-time"><span class="log-time">2026-05-03 10:23:45</span></div>
+        </div>
+        <div class="log-entry">
+          <div class="log-icon upload"><svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg></div>
+          <div class="log-col log-col-user"><span class="log-user">李华</span></div>
+          <div class="log-col log-col-action"><span class="log-action-tag upload">上传</span></div>
+          <div class="log-col log-col-file"><span class="log-file">财务报表_2026.xlsx</span></div>
+          <div class="log-col log-col-ip"><span class="log-ip">192.168.1.102</span></div>
+          <div class="log-col log-col-time"><span class="log-time">2026-05-03 10:18:32</span></div>
+        </div>
+        <div class="log-entry">
+          <div class="log-icon login"><svg viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>
+          <div class="log-col log-col-user"><span class="log-user">王芳</span></div>
+          <div class="log-col log-col-action"><span class="log-action-tag login">登录</span></div>
+          <div class="log-col log-col-file"><span class="log-file">—</span></div>
+          <div class="log-col log-col-ip"><span class="log-ip">192.168.1.103</span></div>
+          <div class="log-col log-col-time"><span class="log-time">2026-05-03 10:15:08</span></div>
+        </div>
+        <div class="log-entry">
+          <div class="log-icon delete"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></div>
+          <div class="log-col log-col-user"><span class="log-user">赵强</span></div>
+          <div class="log-col log-col-action"><span class="log-action-tag delete">删除</span></div>
+          <div class="log-col log-col-file"><span class="log-file">临时文件.tmp</span></div>
+          <div class="log-col log-col-ip"><span class="log-ip">192.168.1.104</span></div>
+          <div class="log-col log-col-time"><span class="log-time">2026-05-03 09:45:21</span></div>
+        </div>
+        <div class="log-entry">
+          <div class="log-icon upload"><svg viewBox="0 0 24 24"><path d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg></div>
+          <div class="log-col log-col-user"><span class="log-user">陈静</span></div>
+          <div class="log-col log-col-action"><span class="log-action-tag upload">上传</span></div>
+          <div class="log-col log-col-file"><span class="log-file">市场推广方案.docx</span></div>
+          <div class="log-col log-col-ip"><span class="log-ip">192.168.1.105</span></div>
+          <div class="log-col log-col-time"><span class="log-time">2026-05-02 18:30:15</span></div>
+        </div>
+        <div class="log-entry">
+          <div class="log-icon download"><svg viewBox="0 0 24 24"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg></div>
+          <div class="log-col log-col-user"><span class="log-user">刘洋</span></div>
+          <div class="log-col log-col-action"><span class="log-action-tag download">下载</span></div>
+          <div class="log-col log-col-file"><span class="log-file">产品手册.pdf</span></div>
+          <div class="log-col log-col-ip"><span class="log-ip">192.168.1.106</span></div>
+          <div class="log-col log-col-time"><span class="log-time">2026-05-02 16:20:08</span></div>
+        </div>
+      </div>
+
+      <div class="pagination">
+        <div class="pagination-info">显示 1-6 条，共 128 条</div>
+        <div class="pagination-controls">
+          <button class="page-btn active">1</button>
+          <button class="page-btn">2</button>
+          <button class="page-btn">3</button>
+          <button class="page-btn">...</button>
+          <button class="page-btn">22</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</body>
+</html>
