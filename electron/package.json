@@ -1,0 +1,49 @@
+{
+  "name": "lan-share",
+  "version": "1.0.0",
+  "description": "局域网共享文件夹管理系统",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:win": "electron-builder --win nsis",
+    "build:win:dir": "electron-builder --win dir"
+  },
+  "author": "LAN Share Team",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "dependencies": {
+    "electron-log": "^5.0.0"
+  },
+  "build": {
+    "appId": "com.lanshare.app",
+    "productName": "LAN Share",
+    "copyright": "Copyright © 2025 LAN Share",
+    "win": {
+      "target": [
+        { "target": "nsis", "arch": ["x64"] },
+        { "target": "portable", "arch": ["x64"] }
+      ],
+      "icon": "assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "LAN Share"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "assets/**",
+      "server/**",
+      "client/**",
+      "admin/**"
+    ],
+    "asar": false
+  }
+}
