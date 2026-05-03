@@ -44,10 +44,10 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           tag_name: v${{ inputs.version }}
-          release_name: LAN Share v${{ inputs.version }}
+          name: LAN Share v${{ inputs.version }}
           draft: false
           prerelease: false
-          artifacts: electron/dist/*.exe
+          files: electron/dist/*.exe
           body: |
             ## LAN Share v${{ inputs.version }}
 
