@@ -1,0 +1,81 @@
+name: Build Windows .exe
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: '版本号 (例如: 1.0.0)'
+        required: true
+        default: '1.0.0'
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install server deps
+        run: npm install
+        working-directory: server
+
+      - name: Install electron deps
+        run: npm install
+        working-directory: electron
+
+      - name: Build Electron app
+        run: npm run build:win
+        working-directory: electron
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: lan-share-exe-${{ inputs.version }}
+          path: electron/dist/
+          retention-days: 30
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ inputs.version }}
+          release_name: LAN Share v${{ inputs.version }}
+          draft: false
+          prerelease: false
+          artifacts: electron/dist/*.exe
+          body: |
+            ## LAN Share v${{ inputs.version }}
+
+            局域网共享文件夹管理系统 - Windows 桌面版
+
+            ### 安装说明
+
+            1. 下载 `LAN-Share-Setup-${{ inputs.version }}.exe` 安装
+            2. 或下载 `LAN-Share-${{ inputs.version }}.exe` 直接运行（免安装）
+
+            ### 配置
+
+            首次运行后，配置文件位于：
+            `%APPDATA%\lan-share\config.json`
+
+            修改配置后重启应用生效：
+            ```json
+            {
+              "port": 3002,
+              "storagePath": "D:/共享文件",
+              "jwtSecret": "your-secret-here"
+            }
+            ```
+
+            ### 客户端访问
+
+            局域网内其他电脑浏览器打开：`http://电脑IP:3002`
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
