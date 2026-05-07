@@ -322,10 +322,10 @@
         <div class="file-grid">
           ${sorted.map(f => renderFileItem(f)).join('')}
         </div>`;
-      // 重新应用选中状态
+      // 重新应用选中状态（用 fullPath 匹配）
       document.querySelectorAll('.file-item').forEach(item => {
-        const name = item.dataset.name;
-        if (selectedFiles.has(name)) {
+        const fullPath = item.dataset.fullpath;
+        if (selectedFiles.has(fullPath)) {
           item.classList.add('selected');
           const cb = item.querySelector('.file-check');
           if (cb) cb.checked = true;
@@ -347,18 +347,20 @@
       }
     }
 
-    function toggleFileSelect(fileName) {
-      if (selectedFiles.has(fileName)) {
-        selectedFiles.delete(fileName);
+    function toggleFileSelect(fullPath, itemEl) {
+      // fullPath: 当前子目录下的完整路径（不含 currentSubPath 前缀）
+      // 例如：currentSubPath="资料/合同"，选择"模板.docx" -> fullPath="资料/合同/模板.docx"
+      // 选择子文件夹"2024" -> fullPath="资料/合同/2024"
+      if (selectedFiles.has(fullPath)) {
+        selectedFiles.delete(fullPath);
       } else {
-        selectedFiles.add(fileName);
+        selectedFiles.add(fullPath);
       }
-      // 同步 checkbox 状态和 item 高亮
-      document.querySelectorAll('.file-check').forEach(cb => {
-        const name = cb.closest('.file-item').dataset.name;
-        cb.checked = selectedFiles.has(name);
-        cb.closest('.file-item').classList.toggle('selected', selectedFiles.has(name));
-      });
+      // 同步 checkbox 和高亮
+      const cb = itemEl.querySelector('.file-check');
+      const isSelected = selectedFiles.has(fullPath);
+      if (cb) cb.checked = isSelected;
+      itemEl.classList.toggle('selected', isSelected);
       updateSelectionBar();
     }
 
@@ -384,32 +386,37 @@
     }
 
     function downloadSelected() {
-      const names = Array.from(selectedFiles);
-      if (!names.length) return;
-      names.forEach(name => {
-        const file = allFiles.find(f => f.name === name);
-        if (file) {
-          const filePath = currentSubPath ? `${currentSubPath}/${name}` : name;
-          Api.downloadFile(currentFolderId, filePath, name);
-        }
+      const paths = Array.from(selectedFiles);
+      if (!paths.length) return;
+      paths.forEach(fullPath => {
+        // fullPath 格式：currentSubPath + '/' + name（若 currentSubPath 为空则无前缀）
+        // 从 fullPath 提取出文件名（路径最后一段）
+        const name = fullPath.split('/').pop();
+        Api.downloadFile(currentFolderId, fullPath, name);
       });
-      showToast(`开始下载 ${names.length} 个文件`, 'success');
+      showToast(`开始下载 ${paths.length} 个文件`, 'success');
     }
 
     function renderFileItem(file) {
       const iconClass = getFileIconClass(file.name, file.isDirectory);
       const iconSvg = getFileSvg(file.name, file.isDirectory);
       const size = file.isDirectory ? '' : formatFileSize(file.size);
-      const isSelected = selectedFiles.has(file.name);
+      // 当前目录层级下该 item 的完整路径（用于选中状态和下载）
+      const fullPath = currentSubPath ? `${currentSubPath}/${file.name}` : file.name;
+      const isSelected = selectedFiles.has(fullPath);
+      // 子文件夹：isDirectory 且不在更深层级（subPath 不含 '/'）
       const isSubFolder = file.isDirectory && !file.subPath?.includes('/');
+      // 是否可选（文件和当前级子文件夹）
+      const isSelectable = !file.isDirectory || isSubFolder;
 
       return `
         <div class="file-item ${isSelected ? 'selected' : ''}"
              data-name="${escapeAttr(file.name)}"
+             data-fullpath="${escapeAttr(fullPath)}"
              onclick="onItemClick(event, ${isSubFolder ? 0 : (file.isDirectory ? -1 : 'null')}, '${escapeAttr(file.name)}')"
              ondblclick="${!file.isDirectory ? `onFileClick('${escapeAttr(file.name)}', ${file.size})` : ''}"
              title="${escapeHtml(file.name)}">
-          ${!file.isDirectory ? `<input type="checkbox" class="file-check" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation();toggleFileSelect('${escapeAttr(file.name)}')">` : ''}
+          ${isSelectable ? `<input type="checkbox" class="file-check" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation();toggleFileSelect('${escapeAttr(fullPath)}', this.closest('.file-item'))">` : ''}
           <div class="file-icon ${iconClass}">${iconSvg}</div>
           <div class="file-name">${escapeHtml(file.name)}</div>
           <div class="file-size">${size}</div>
