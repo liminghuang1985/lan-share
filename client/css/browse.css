@@ -397,3 +397,19 @@
   .toolbar-actions { justify-content: space-between; }
   .file-grid { grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); }
 }
+
+/* ============ 文件选择 ============ */
+.file-item { position: relative; }
+.file-item.selected { background: var(--accent-subtle, rgba(97,66,217,0.15)); }
+.file-check {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--accent, #6142D9);
+  z-index: 2;
+}
+.file-item:hover .file-check { display: block; opacity: 0.6; }
+.file-item.selected .file-check { display: block; opacity: 1; }

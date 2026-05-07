@@ -140,8 +140,13 @@ function showModal({ title, body, onConfirm, confirmText = '确定', cancelText 
 }
 
 function closeModal() {
+  // 兼容 #modal-overlay（全局确认框）和 #userModal / #folderModal 内的 modal
   const overlay = document.getElementById('modal-overlay');
   if (overlay) overlay.remove();
+  const userModal = document.getElementById('userModal');
+  if (userModal) userModal.innerHTML = '';
+  const folderModal = document.getElementById('folderModal');
+  if (folderModal) folderModal.innerHTML = '';
 }
 
 // ============ 工具 ============

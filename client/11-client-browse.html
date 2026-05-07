@@ -69,6 +69,11 @@
           <span class="text-secondary">共享文件</span>
         </div>
         <div class="toolbar-actions">
+          <div id="selectionBar" style="display:none;align-items:center;gap:8px;margin-right:8px;">
+            <span id="selectedCount" style="font-size:13px;color:var(--text-secondary);"></span>
+            <button class="btn btn-ghost btn-sm" onclick="clearSelection()">取消选择</button>
+            <button class="btn btn-primary btn-sm" onclick="downloadSelected()">下载选中</button>
+          </div>
           <div class="search-box">
             <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/></svg>
             <input type="text" id="searchInput" placeholder="搜索文件名..." oninput="onSearch(this.value)">
@@ -128,10 +133,12 @@
     // ============ 全局状态 ============
     let currentFolderId = null;
     let currentFolderName = '';
+    let currentSubPath = '';   // 当前子路径（如 "资料/合同"）
     let folders = [];
     let allFiles = [];     // 当前目录所有文件
     let filteredFiles = []; // 搜索过滤后
     let currentFolderPath = []; // 面包屑路径栈
+    let selectedFiles = new Set(); // 已选中的文件名
     let user = null;
 
     // ============ 主题切换 ============
@@ -204,9 +211,10 @@
     }
 
     // ============ 打开文件夹 ============
-    async function openFolder(folderId, folderName) {
+    async function openFolder(folderId, folderName, subPath = '') {
       currentFolderId = folderId;
       currentFolderName = folderName;
+      currentSubPath = subPath;
 
       // 找文件夹信息
       const folderInfo = folders.find(f => f.id === folderId);
@@ -216,12 +224,25 @@
       renderFolderList();
 
       // 更新面包屑
-      currentFolderPath = [{ id: folderId, name: folderName }];
+      currentFolderPath = [{ id: folderId, name: folderName, subPath: '' }];
+      if (subPath) {
+        const parts = subPath.split('/');
+        let accumulated = '';
+        for (const part of parts) {
+          accumulated = accumulated ? `${accumulated}/${part}` : part;
+          currentFolderPath.push({ id: folderId, name: part, subPath: accumulated });
+        }
+      }
       renderBreadcrumb();
 
-      // 显示上传按钮
-      document.getElementById('uploadBtn').style.display = canWrite ? 'inline-flex' : 'none';
+      // 显示上传按钮（有写权限且在根目录时）
+      const canUpload = canWrite && !subPath;
+      document.getElementById('uploadBtn').style.display = canUpload ? 'inline-flex' : 'none';
       document.getElementById('uploadBtn').dataset.folderId = folderId;
+
+      // 清空选择
+      selectedFiles.clear();
+      updateSelectionBar();
 
       // 加载文件列表
       const container = document.getElementById('fileListContainer');
@@ -229,7 +250,7 @@
       document.getElementById('emptyHint').style.display = 'none';
 
       try {
-        const data = await Api.browseFolder(folderId);
+        const data = await Api.browseFolder(folderId, subPath);
         allFiles = data.files || [];
         filteredFiles = [...allFiles];
         renderFileList();
@@ -242,29 +263,41 @@
     // ============ 渲染面包屑 ============
     function renderBreadcrumb() {
       const el = document.getElementById('breadcrumb');
-      const crumbs = [{ name: '共享文件', id: null }];
-      if (currentFolderName) crumbs.push({ name: currentFolderName, id: currentFolderId });
+      const crumbs = [{ name: '共享文件', id: null, subPath: '' }];
+      crumbs.push(...currentFolderPath);
 
       el.innerHTML = crumbs.map((c, i) => {
         if (i === crumbs.length - 1) {
           return `<span class="breadcrumb-current">${escapeHtml(c.name)}</span>`;
         }
-        return `<span class="text-secondary" style="cursor:pointer" onclick="goBack()">${escapeHtml(c.name)}</span>
+        return `<span class="text-secondary breadcrumb-link" onclick="openFolder(${c.id}, '${escapeAttr(c.name)}', '${escapeAttr(c.subPath || '')}')">${escapeHtml(c.name)}</span>
                 <span class="breadcrumb-sep">›</span>`;
       }).join('');
     }
 
     function goBack() {
-      currentFolderId = null;
-      currentFolderName = '';
-      allFiles = [];
-      filteredFiles = [];
-      currentFolderPath = [];
-      document.getElementById('breadcrumb').innerHTML = '<span class="text-secondary">共享文件</span>';
-      document.getElementById('uploadBtn').style.display = 'none';
-      document.getElementById('fileListContainer').innerHTML = '';
-      document.getElementById('emptyHint').style.display = 'flex';
-      renderFolderList();
+      if (currentSubPath) {
+        // 返回上一级子目录
+        const parts = currentSubPath.split('/');
+        parts.pop();
+        const parentSubPath = parts.join('/');
+        openFolder(currentFolderId, currentFolderName, parentSubPath);
+      } else {
+        // 返回文件夹列表
+        currentFolderId = null;
+        currentFolderName = '';
+        currentSubPath = '';
+        allFiles = [];
+        filteredFiles = [];
+        currentFolderPath = [];
+        selectedFiles.clear();
+        document.getElementById('breadcrumb').innerHTML = '<span class="text-secondary">共享文件</span>';
+        document.getElementById('uploadBtn').style.display = 'none';
+        document.getElementById('fileListContainer').innerHTML = '';
+        document.getElementById('emptyHint').style.display = 'flex';
+        renderFolderList();
+        updateSelectionBar();
+      }
     }
 
     // ============ 渲染文件列表 ============
@@ -289,17 +322,94 @@
         <div class="file-grid">
           ${sorted.map(f => renderFileItem(f)).join('')}
         </div>`;
+      // 重新应用选中状态
+      document.querySelectorAll('.file-item').forEach(item => {
+        const name = item.dataset.name;
+        if (selectedFiles.has(name)) {
+          item.classList.add('selected');
+          const cb = item.querySelector('.file-check');
+          if (cb) cb.checked = true;
+        }
+      });
+    }
+
+    function onItemClick(event, subFolderId, subFolderName) {
+      // subFolderId = null 表示文件，subFolderId = 0 表示根目录下的子文件夹
+      if (subFolderId !== null) {
+        // 是文件夹，进入子目录
+        const subPath = currentSubPath ? `${currentSubPath}/${subFolderName}` : subFolderName;
+        openFolder(currentFolderId, currentFolderName, subPath);
+      } else {
+        // 是文件，显示下载确认
+        const name = event.currentTarget.dataset.name;
+        const file = allFiles.find(f => f.name === name);
+        if (file) onFileClick(file.name, file.size);
+      }
+    }
+
+    function toggleFileSelect(fileName) {
+      if (selectedFiles.has(fileName)) {
+        selectedFiles.delete(fileName);
+      } else {
+        selectedFiles.add(fileName);
+      }
+      // 同步 checkbox 状态和 item 高亮
+      document.querySelectorAll('.file-check').forEach(cb => {
+        const name = cb.closest('.file-item').dataset.name;
+        cb.checked = selectedFiles.has(name);
+        cb.closest('.file-item').classList.toggle('selected', selectedFiles.has(name));
+      });
+      updateSelectionBar();
+    }
+
+    function updateSelectionBar() {
+      const bar = document.getElementById('selectionBar');
+      const count = document.getElementById('selectedCount');
+      if (!bar) return;
+      if (selectedFiles.size === 0) {
+        bar.style.display = 'none';
+      } else {
+        bar.style.display = 'flex';
+        count.textContent = `已选择 ${selectedFiles.size} 个文件`;
+      }
+    }
+
+    function clearSelection() {
+      selectedFiles.clear();
+      document.querySelectorAll('.file-check').forEach(cb => {
+        cb.checked = false;
+        cb.closest('.file-item').classList.remove('selected');
+      });
+      updateSelectionBar();
+    }
+
+    function downloadSelected() {
+      const names = Array.from(selectedFiles);
+      if (!names.length) return;
+      names.forEach(name => {
+        const file = allFiles.find(f => f.name === name);
+        if (file) {
+          const filePath = currentSubPath ? `${currentSubPath}/${name}` : name;
+          Api.downloadFile(currentFolderId, filePath, name);
+        }
+      });
+      showToast(`开始下载 ${names.length} 个文件`, 'success');
     }
 
     function renderFileItem(file) {
       const iconClass = getFileIconClass(file.name, file.isDirectory);
       const iconSvg = getFileSvg(file.name, file.isDirectory);
       const size = file.isDirectory ? '' : formatFileSize(file.size);
+      const isSelected = selectedFiles.has(file.name);
+      const isSubFolder = file.isDirectory && !file.subPath?.includes('/');
 
       return `
-        <div class="file-item" onclick="${file.isDirectory ? `openFolder(${currentFolderId}, '${escapeAttr(currentFolderName)}')` : `onFileClick('${escapeAttr(file.name)}', ${file.size})`}"
+        <div class="file-item ${isSelected ? 'selected' : ''}"
+             data-name="${escapeAttr(file.name)}"
+             onclick="onItemClick(event, ${isSubFolder ? 0 : (file.isDirectory ? -1 : 'null')}, '${escapeAttr(file.name)}')"
              ondblclick="${!file.isDirectory ? `onFileClick('${escapeAttr(file.name)}', ${file.size})` : ''}"
              title="${escapeHtml(file.name)}">
+          ${!file.isDirectory ? `<input type="checkbox" class="file-check" ${isSelected ? 'checked' : ''} onclick="event.stopPropagation();toggleFileSelect('${escapeAttr(file.name)}')">` : ''}
           <div class="file-icon ${iconClass}">${iconSvg}</div>
           <div class="file-name">${escapeHtml(file.name)}</div>
           <div class="file-size">${size}</div>

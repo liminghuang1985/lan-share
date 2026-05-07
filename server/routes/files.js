@@ -76,28 +76,33 @@ router.get('/browse/:folderId', authenticate, requireRead, (req, res) => {
       return res.status(403).json({ error: '没有读取权限' });
     }
     
-    // 列出文件
-    const folderPath = folder.path;
+    // 支持 subPath 参数进入子文件夹
+    const subPath = req.query.subPath || '';
+    const basePath = folder.path;
+    const browsePath = subPath ? path.join(basePath, subPath) : basePath;
+    
     let files = [];
     
     try {
-      const entries = fs.readdirSync(folderPath, { withFileTypes: true });
+      const entries = fs.readdirSync(browsePath, { withFileTypes: true });
       files = entries.map(entry => {
-        const fullPath = path.join(folderPath, entry.name);
+        const entrySubPath = subPath ? `${subPath}/${entry.name}` : entry.name;
+        const fullPath = path.join(browsePath, entry.name);
         let stats = null;
         try { stats = fs.statSync(fullPath); } catch (e) {}
         return {
           name: entry.name,
           isDirectory: entry.isDirectory(),
           size: stats ? stats.size : 0,
-          modified: stats ? stats.mtime.toISOString() : null
+          modified: stats ? stats.mtime.toISOString() : null,
+          subPath: entrySubPath
         };
       });
     } catch (e) {
       console.error('读取文件夹错误:', e);
     }
     
-    res.json({ folder, files });
+    res.json({ folder, files, currentPath: subPath });
   } catch (err) {
     console.error('浏览文件夹错误:', err);
     res.status(500).json({ error: '服务器错误' });

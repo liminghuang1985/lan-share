@@ -104,8 +104,9 @@ const Api = {
     return request('GET', `/files/folders?type=${type}`);
   },
 
-  async browseFolder(folderId) {
-    return request('GET', `/files/browse/${folderId}`);
+  async browseFolder(folderId, subPath = '') {
+    const query = subPath ? `?subPath=${encodeURIComponent(subPath)}` : '';
+    return request('GET', `/files/browse/${folderId}${query}`);
   },
 
   // -------- 文件操作 --------

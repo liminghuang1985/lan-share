@@ -108,30 +108,8 @@ router.get('/me', authenticate, (req, res) => {
 });
 
 // 验证 Token
-router.get('/verify', (req, res) => {
-  const authHeader = req.headers.authorization;
-  
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    return res.status(401).json({ valid: false });
-  }
-  
-  const token = authHeader.substring(7);
-  
-  try {
-    const { jwt } = require('jsonwebtoken');
-    const { JWT_SECRET } = require('../auth');
-    const decoded = jwt.verify(token, JWT_SECRET);
-    
-    const user = db.prepare('SELECT id, username, role, status FROM users WHERE id = ?').get(decoded.id);
-    
-    if (!user || user.status === 'disabled') {
-      return res.status(401).json({ valid: false });
-    }
-    
-    res.json({ valid: true, user });
-  } catch (err) {
-    res.status(401).json({ valid: false });
-  }
+router.get('/verify', authenticate, (req, res) => {
+  res.json({ valid: true, user: req.user });
 });
 
 module.exports = router;
