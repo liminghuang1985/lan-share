@@ -1,0 +1,74 @@
+{
+  "name": "lan-share",
+  "version": "1.0.0",
+  "description": "局域网共享文件夹管理系统",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "build:electron": "npx electron-builder --win dir --projectDir electron"
+  },
+  "build": {
+    "appId": "com.lanshare.app",
+    "productName": "LAN Share",
+    "copyright": "Copyright © 2025 LAN Share",
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "electron/assets/icon.png"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "LAN Share"
+    },
+    "directories": {
+      "app": "electron",
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "assets/**"
+    ],
+    "extraFiles": [
+      {
+        "from": "../server",
+        "to": "server",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../client",
+        "to": "client",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "../admin",
+        "to": "admin",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "asar": false
+  },
+  "devDependencies": {
+    "electron-builder": "^25.0.0"
+  },
+  "dependencies": {
+    "express-rate-limit": "^8.5.1",
+    "helmet": "^8.1.0"
+  }
+}

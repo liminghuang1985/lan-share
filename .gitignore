@@ -1,4 +1,30 @@
+# Dependencies
 node_modules/
+**/node_modules/
+
+# Build artifacts
+*.exe
+electron/dist/
+electron/prebuild-output/
+
+# Prebuild 复制产物（prebuild.js 每次会从 ../server ../client ../admin 重拷）
+electron/server/
+electron/client/
+electron/admin/
+
+# Runtime data
 data/*.db
-.env
+server/data/*.db
+
+# Logs
 *.log
+logs/
+
+# Env
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
